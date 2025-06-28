@@ -13,10 +13,25 @@ export interface EnhancedAIResponse {
   needsMoreInfo?: boolean;
   category?: string;
   dataSource?: 'real_time' | 'ai_generated' | 'mixed';
+  apiError?: string; // For API quota/error handling
 }
 
 export class EnhancedAIAssistant {
   static async processQuery(query: string): Promise<EnhancedAIResponse> {
+    // Check quota status immediately
+    if (geminiService.isQuotaExceeded()) {
+      const resetTime = geminiService.getQuotaResetTime();
+      const resetTimeStr = resetTime ? new Date(resetTime).toLocaleTimeString() : 'later';
+      
+      return {
+        message: `I'm currently experiencing API quota limits and can't process AI-powered searches right now. The service will be available again around ${resetTimeStr}. In the meantime, I can show you some popular products or you can browse by category.`,
+        products: [],
+        suggestedActions: ['Show popular products', 'Browse categories', 'Try again later'],
+        dataSource: 'ai_generated',
+        apiError: `API quota exceeded. Service will reset around ${resetTimeStr}.`
+      };
+    }
+
     const lowercaseQuery = query.toLowerCase();
     
     // Handle greetings
@@ -119,8 +134,19 @@ Would you like me to show you popular products in this category instead?`;
         dataSource
       };
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error processing enhanced query:', error);
+      
+      // Check if it's a quota error
+      if (error.message?.includes('quota')) {
+        return {
+          message: `I'm currently experiencing API quota limits and can't process AI-powered searches right now. I can still show you some popular products or you can browse by category.`,
+          products: [],
+          suggestedActions: ['Show popular products', 'Browse categories', 'Try again later'],
+          dataSource: 'ai_generated',
+          apiError: 'API quota exceeded. Please try again later.'
+        };
+      }
       
       return {
         message: `I encountered an error while searching for "${query}". This could be due to:
@@ -309,6 +335,20 @@ Return only the response text:
     priceRange: string,
     category: string
   ): Promise<EnhancedAIResponse> {
+    // Check quota status immediately
+    if (geminiService.isQuotaExceeded()) {
+      const resetTime = geminiService.getQuotaResetTime();
+      const resetTimeStr = resetTime ? new Date(resetTime).toLocaleTimeString() : 'later';
+      
+      return {
+        message: `I'm currently experiencing API quota limits. I can still search for ${brand !== 'any' ? brand + ' ' : ''}${category} products using our product database, but AI-powered recommendations will be available again around ${resetTimeStr}.`,
+        products: [],
+        suggestedActions: ['Show popular products', 'Browse categories', 'Try again later'],
+        dataSource: 'ai_generated',
+        apiError: `API quota exceeded. Service will reset around ${resetTimeStr}.`
+      };
+    }
+
     try {
       let searchQuery = '';
       
@@ -377,8 +417,19 @@ Return only the response text:
         dataSource
       };
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error processing brand/price selection:', error);
+      
+      // Check if it's a quota error
+      if (error.message?.includes('quota')) {
+        return {
+          message: `I'm currently experiencing API quota limits. I can still search for ${brand !== 'any' ? brand + ' ' : ''}${category} products, but AI-powered features are temporarily unavailable.`,
+          products: [],
+          suggestedActions: ['Show popular products', 'Browse categories', 'Try again later'],
+          dataSource: 'ai_generated',
+          apiError: 'API quota exceeded. Please try again later.'
+        };
+      }
       
       return {
         message: `I encountered an error while searching for ${brand !== 'any' ? brand + ' ' : ''}${category} products. Please try again or browse our popular products.`,
@@ -390,6 +441,20 @@ Return only the response text:
   }
 
   static async processQuizAnswers(answers: Array<{questionId: string, answer: string}>): Promise<EnhancedAIResponse> {
+    // Check quota status immediately
+    if (geminiService.isQuotaExceeded()) {
+      const resetTime = geminiService.getQuotaResetTime();
+      const resetTimeStr = resetTime ? new Date(resetTime).toLocaleTimeString() : 'later';
+      
+      return {
+        message: `I'm currently experiencing API quota limits and can't process personalized quiz recommendations right now. The service will be available again around ${resetTimeStr}. I can still show you popular products based on your category preferences.`,
+        products: [],
+        suggestedActions: ['Show popular products', 'Browse categories', 'Try direct search'],
+        dataSource: 'ai_generated',
+        apiError: `API quota exceeded. Service will reset around ${resetTimeStr}.`
+      };
+    }
+
     try {
       // Extract preferences from quiz answers
       const categoryAnswer = answers.find(a => a.questionId === 'category')?.answer.toLowerCase();
@@ -445,8 +510,19 @@ Return only the response text:
         dataSource
       };
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error processing quiz:', error);
+      
+      // Check if it's a quota error
+      if (error.message?.includes('quota')) {
+        return {
+          message: "I'm currently experiencing API quota limits and can't generate personalized quiz recommendations. Would you like to try a direct search instead?",
+          products: [],
+          suggestedActions: ['Try direct search', 'Browse categories', 'Try again later'],
+          dataSource: 'ai_generated',
+          apiError: 'API quota exceeded. Please try again later.'
+        };
+      }
       
       return {
         message: "Based on your preferences, I'm having trouble finding the perfect products right now. Would you like to try a direct search instead?",

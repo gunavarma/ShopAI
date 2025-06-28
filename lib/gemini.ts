@@ -5,20 +5,33 @@ const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || '
 
 export class GeminiService {
   private model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-  private isQuotaExceeded = false;
+  private isQuotaExceededFlag = false;
   private quotaResetTime: number | null = null;
 
-  async generateResponse(prompt: string): Promise<string> {
-    // Check if we're in quota exceeded state and if enough time has passed
-    if (this.isQuotaExceeded && this.quotaResetTime) {
+  // Public method to check quota status
+  isQuotaExceeded(): boolean {
+    if (this.isQuotaExceededFlag && this.quotaResetTime) {
       const now = Date.now();
-      if (now < this.quotaResetTime) {
-        throw new Error('API quota exceeded. Please try again later.');
-      } else {
+      if (now >= this.quotaResetTime) {
         // Reset quota state after waiting period
-        this.isQuotaExceeded = false;
+        this.isQuotaExceededFlag = false;
         this.quotaResetTime = null;
+        return false;
       }
+      return true;
+    }
+    return this.isQuotaExceededFlag;
+  }
+
+  // Public method to get quota reset time
+  getQuotaResetTime(): number | null {
+    return this.quotaResetTime;
+  }
+
+  async generateResponse(prompt: string): Promise<string> {
+    // Check quota status immediately
+    if (this.isQuotaExceeded()) {
+      throw new Error('API quota exceeded. Please try again later.');
     }
 
     try {
@@ -30,7 +43,7 @@ export class GeminiService {
       
       // Handle quota exceeded errors
       if (error.message?.includes('429') || error.message?.includes('quota')) {
-        this.isQuotaExceeded = true;
+        this.isQuotaExceededFlag = true;
         // Set reset time to 1 hour from now (adjust as needed)
         this.quotaResetTime = Date.now() + (60 * 60 * 1000);
         throw new Error('API quota exceeded. Please try again later.');
