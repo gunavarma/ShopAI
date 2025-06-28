@@ -1,0 +1,375 @@
+"use client";
+
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Star, TrendingUp, ShoppingCart, Heart, Share2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { RealtimeProduct } from '@/lib/realtime-products';
+import { geminiService } from '@/lib/gemini';
+
+interface ProductModalProps {
+  product: RealtimeProduct | null;
+  open: boolean;
+  onClose: () => void;
+  onBuyNow: (product: RealtimeProduct) => void;
+}
+
+export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalProps) {
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [relatedImages, setRelatedImages] = useState<string[]>([]);
+  const [isLoadingImages, setIsLoadingImages] = useState(false);
+
+  useEffect(() => {
+    if (product && open) {
+      loadRelatedImages();
+    }
+  }, [product, open]);
+
+  const loadRelatedImages = async () => {
+    if (!product) return;
+    
+    setIsLoadingImages(true);
+    try {
+      const images = await geminiService.getRelatedProductImages(
+        product.name,
+        product.category,
+        product.brand
+      );
+      setRelatedImages([product.image, ...images.slice(0, 3)]); // Include main image + 3 related
+      setSelectedImageIndex(0);
+    } catch (error) {
+      console.error('Error loading related images:', error);
+      setRelatedImages([product.image]); // Fallback to main image only
+    } finally {
+      setIsLoadingImages(false);
+    }
+  };
+
+  if (!product) return null;
+
+  const getSentimentColor = (sentiment: string) => {
+    switch (sentiment) {
+      case 'positive': return 'text-green-500';
+      case 'negative': return 'text-red-500';
+      default: return 'text-yellow-500';
+    }
+  };
+
+  const getSentimentLabel = (sentiment: string) => {
+    switch (sentiment) {
+      case 'positive': return 'Positive';
+      case 'negative': return 'Negative';
+      default: return 'Neutral';
+    }
+  };
+
+  const nextImage = () => {
+    setSelectedImageIndex((prev) => (prev + 1) % relatedImages.length);
+  };
+
+  const prevImage = () => {
+    setSelectedImageIndex((prev) => (prev - 1 + relatedImages.length) % relatedImages.length);
+  };
+
+  const currentImage = relatedImages[selectedImageIndex] || product.image;
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="glass-card border-primary/30 max-w-4xl max-h-[90vh] p-0 overflow-hidden">
+        <DialogHeader>
+          <DialogTitle className="sr-only">
+            {product.name} - Product Details
+          </DialogTitle>
+        </DialogHeader>
+        
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-border/50">
+          <div>
+            <Badge variant="secondary" className="mb-2">
+              {product.brand}
+            </Badge>
+            <h2 className="text-2xl font-bold gradient-text">
+              {product.name}
+            </h2>
+          </div>
+        </div>
+
+        {/* Scrollable Content */}
+        <ScrollArea className="flex-1 max-h-[calc(90vh-120px)]">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6">
+            {/* Product Images */}
+            <div className="space-y-4">
+              {/* Main Image Display */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="relative aspect-square rounded-xl overflow-hidden bg-muted group"
+              >
+                <img
+                  src={currentImage}
+                  alt={`${product.name} - Image ${selectedImageIndex + 1}`}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = 'https://images.pexels.com/photos/356056/pexels-photo-356056.jpeg?auto=compress&cs=tinysrgb&w=800';
+                  }}
+                />
+                
+                {/* Image Navigation */}
+                {relatedImages.length > 1 && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="absolute left-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm"
+                      onClick={prevImage}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-background/80 backdrop-blur-sm"
+                      onClick={nextImage}
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </>
+                )}
+
+                {/* Image Counter */}
+                {relatedImages.length > 1 && (
+                  <div className="absolute bottom-2 right-2 px-2 py-1 bg-background/80 backdrop-blur-sm rounded-md text-xs">
+                    {selectedImageIndex + 1} / {relatedImages.length}
+                  </div>
+                )}
+              </motion.div>
+
+              {/* Image Thumbnails */}
+              {relatedImages.length > 1 && (
+                <div className="flex gap-2 overflow-x-auto">
+                  {relatedImages.map((image, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImageIndex(index)}
+                      className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors ${
+                        selectedImageIndex === index 
+                          ? 'border-primary' 
+                          : 'border-border/50 hover:border-border'
+                      }`}
+                    >
+                      <img
+                        src={image}
+                        alt={`${product.name} thumbnail ${index + 1}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = 'https://images.pexels.com/photos/356056/pexels-photo-356056.jpeg?auto=compress&cs=tinysrgb&w=800';
+                        }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              {/* Real-time indicator */}
+              <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm text-green-700 dark:text-green-400">
+                  {isLoadingImages ? 'Loading related images...' : 'AI-generated related images'}
+                </span>
+              </div>
+            </div>
+
+            {/* Product Details */}
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
+                    <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                    <span className="font-semibold">{product.rating}</span>
+                  </div>
+                  <span className="text-muted-foreground">
+                    ({product.reviewCount.toLocaleString()} reviews)
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm">
+                    <Heart className="w-4 h-4" />
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Share2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-baseline gap-3">
+                  <span className="text-3xl font-bold">
+                    ₹{product.price.toLocaleString()}
+                  </span>
+                  {product.originalPrice && (
+                    <span className="text-xl text-muted-foreground line-through">
+                      ₹{product.originalPrice.toLocaleString()}
+                    </span>
+                  )}
+                </div>
+                <p className="text-muted-foreground">{product.description}</p>
+              </div>
+
+              {/* Availability Status */}
+              <div className="flex items-center gap-2">
+                <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  product.inStock 
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' 
+                    : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+                }`}>
+                  {product.availability}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="font-semibold">Key Features</h4>
+                <div className="grid grid-cols-1 gap-2">
+                  {product.features.map((feature, index) => (
+                    <Badge key={index} variant="outline" className="justify-start">
+                      {feature}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-semibold">Review Sentiment</h4>
+                  <TrendingUp className={`w-5 h-5 ${getSentimentColor(product.sentiment)}`} />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>{getSentimentLabel(product.sentiment)}</span>
+                    <span>{product.sentimentScore}%</span>
+                  </div>
+                  <Progress value={product.sentimentScore} className="h-2" />
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  size="lg"
+                  className="flex-1 neon-glow"
+                  onClick={() => onBuyNow(product)}
+                  disabled={!product.inStock}
+                >
+                  <ShoppingCart className="w-5 h-5 mr-2" />
+                  {product.inStock ? 'Buy Now' : 'Out of Stock'}
+                </Button>
+                <Button variant="outline" size="lg">
+                  Add to Wishlist
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Detailed Information Tabs */}
+          <div className="px-6 pb-6">
+            <Tabs defaultValue="reviews" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="reviews">AI Review Analysis</TabsTrigger>
+                <TabsTrigger value="specs">Specifications</TabsTrigger>
+                <TabsTrigger value="realtime">Real-time Data</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="reviews" className="space-y-4 mt-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="glass-card rounded-lg p-4">
+                    <h5 className="font-semibold text-green-600 mb-3">Pros</h5>
+                    <ul className="space-y-2">
+                      {product.pros.map((pro, index) => (
+                        <li key={index} className="flex items-start gap-2 text-sm">
+                          <span className="text-green-500 mt-1">•</span>
+                          {pro}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <div className="glass-card rounded-lg p-4">
+                    <h5 className="font-semibold text-red-600 mb-3">Cons</h5>
+                    <ul className="space-y-2">
+                      {product.cons.map((con, index) => (
+                        <li key={index} className="flex items-start gap-2 text-sm">
+                          <span className="text-red-500 mt-1">•</span>
+                          {con}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="specs" className="mt-6">
+                <div className="glass-card rounded-lg p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <h5 className="font-semibold mb-2">Brand</h5>
+                      <p className="text-muted-foreground">{product.brand}</p>
+                    </div>
+                    <div>
+                      <h5 className="font-semibold mb-2">Category</h5>
+                      <p className="text-muted-foreground capitalize">
+                        {product.category}
+                      </p>
+                    </div>
+                    {Object.entries(product.specifications).map(([key, value]) => (
+                      <div key={key}>
+                        <h5 className="font-semibold mb-2 capitalize">{key}</h5>
+                        <p className="text-muted-foreground">{value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="realtime" className="mt-6">
+                <div className="glass-card rounded-lg p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                    <h5 className="font-semibold text-green-600">Live Product Data</h5>
+                  </div>
+                  <div className="space-y-3 text-sm">
+                    <p className="text-muted-foreground">
+                      This product information and related images are fetched in real-time using Gemini AI to provide you with the most current data and visual context available.
+                    </p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="font-medium">Data Source:</span>
+                        <p className="text-muted-foreground">Gemini AI</p>
+                      </div>
+                      <div>
+                        <span className="font-medium">Images:</span>
+                        <p className="text-muted-foreground">AI-curated from Pexels</p>
+                      </div>
+                      <div>
+                        <span className="font-medium">Last Updated:</span>
+                        <p className="text-muted-foreground">Just now</p>
+                      </div>
+                      <div>
+                        <span className="font-medium">Related Images:</span>
+                        <p className="text-muted-foreground">{relatedImages.length} images</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+}
