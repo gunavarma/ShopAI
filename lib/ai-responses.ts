@@ -8,38 +8,42 @@ export interface AIResponse {
   suggestedActions?: string[];
   requiresQuiz?: boolean;
   structuredRecommendations?: ShoppingAssistantResponse;
+  clarifyingQuestions?: string[];
+  brandSuggestions?: string[];
+  needsMoreInfo?: boolean;
 }
 
 export class AIAssistant {
-  private static async analyzeQuery(query: string): Promise<{
-    intent: string;
+  private static async analyzeQueryIntent(query: string): Promise<{
+    isSpecific: boolean;
     category?: string;
-    priceRange?: { min: number; max: number };
-    features?: string[];
-    productNames?: string[];
-    brand?: string;
-    isSpecificSearch?: boolean;
+    hasPrice?: boolean;
+    hasBrand?: boolean;
+    hasSize?: boolean;
+    hasColor?: boolean;
+    needsClarification: boolean;
+    missingInfo: string[];
   }> {
     try {
       const analysisPrompt = `
-Analyze this shopping query and extract key information:
+Analyze this shopping query to determine if it needs clarification:
 Query: "${query}"
 
 Determine:
-1. intent: "search", "compare", "help", "greeting", "specific_product", "brand_search"
-2. category: product category if mentioned (monitor, laptop, smartphone, headphones, etc.)
-3. priceRange: {min: number, max: number} if price mentioned (in rupees)
-4. features: array of specific features mentioned
-5. productNames: array of specific product names if mentioned
-6. brand: specific brand if mentioned (apple, samsung, nike, etc.)
-7. isSpecificSearch: true if searching for specific product/brand
+1. isSpecific: Is this a specific product search (like "iPhone 15 Pro") or general (like "gym shirt")?
+2. category: What product category is this?
+3. hasPrice: Does the query mention a price range?
+4. hasBrand: Does the query mention a specific brand?
+5. hasSize: Does the query mention size (for clothing/shoes)?
+6. hasColor: Does the query mention color preference?
+7. needsClarification: Should we ask clarifying questions before showing products?
+8. missingInfo: Array of missing information that would help narrow down results
 
 Examples:
-- "apple watch" → intent: "brand_search", brand: "apple", category: "smartwatch", isSpecificSearch: true
-- "iphone 15" → intent: "specific_product", brand: "apple", productNames: ["iPhone 15"], isSpecificSearch: true
-- "samsung galaxy" → intent: "brand_search", brand: "samsung", category: "smartphone", isSpecificSearch: true
-- "monitors under 30000" → intent: "search", category: "monitor", priceRange: {min: 0, max: 30000}
-- "running shoes" → intent: "search", category: "shoes", features: ["running"]
+- "gym shirt" → isSpecific: false, needsClarification: true, missingInfo: ["brand", "price", "size"]
+- "iPhone 15 Pro 256GB" → isSpecific: true, needsClarification: false
+- "running shoes under 5000" → isSpecific: false, needsClarification: true, missingInfo: ["brand", "size"]
+- "Nike Air Max size 9" → isSpecific: true, needsClarification: false
 
 Return only valid JSON:
 `;
@@ -50,40 +54,122 @@ Return only valid JSON:
       try {
         return JSON.parse(cleanResponse);
       } catch (parseError) {
-        console.error('Failed to parse query analysis:', parseError);
-        return { intent: 'search' };
+        console.error('Failed to parse intent analysis:', parseError);
+        return { 
+          isSpecific: false, 
+          needsClarification: true, 
+          missingInfo: ['brand', 'price'] 
+        };
       }
     } catch (error) {
-      console.error('Error analyzing query:', error);
-      return { intent: 'search' };
+      console.error('Error analyzing query intent:', error);
+      return { 
+        isSpecific: false, 
+        needsClarification: true, 
+        missingInfo: ['brand', 'price'] 
+      };
     }
   }
 
-  private static getSuggestedActions(products: RealtimeProduct[], query: string, analysis: any): string[] {
-    const lowercaseQuery = query.toLowerCase();
-    
-    if (products.length === 0) {
-      return ['Show popular products', 'Help me choose', 'Try different search', 'Browse categories'];
-    }
-    
-    if (analysis.isSpecificSearch && analysis.brand) {
-      return [
-        `More ${analysis.brand} products`,
-        'Compare with other brands',
-        'Show similar products',
-        'Check specifications'
-      ];
-    }
-    
-    if (products.length === 1) {
-      return ['Find similar products', 'Compare with others', 'Tell me more', 'Check availability'];
-    }
+  private static async generateClarifyingQuestions(
+    query: string, 
+    category: string, 
+    missingInfo: string[]
+  ): Promise<{
+    questions: string[];
+    brandSuggestions: string[];
+  }> {
+    try {
+      const questionPrompt = `
+Generate clarifying questions and brand suggestions for this shopping query:
+Query: "${query}"
+Category: "${category}"
+Missing Info: ${missingInfo.join(', ')}
 
-    if (lowercaseQuery.includes('compare')) {
-      return ['Show detailed comparison', 'Help me decide', 'Show more options'];
-    }
+Generate:
+1. 3-4 specific clarifying questions to help narrow down the search
+2. 4-6 popular brand suggestions for this category
 
-    return ['Compare these products', 'Show more details', 'Filter by price', 'Help me choose'];
+For category-specific questions:
+- Clothing: Ask about brand, size, price range, style/fit
+- Shoes: Ask about brand, size, price range, type of activity
+- Electronics: Ask about brand, price range, specific features
+- Fitness: Ask about brand, price range, type of exercise
+
+Return JSON format:
+{
+  "questions": ["Question 1?", "Question 2?", "Question 3?"],
+  "brandSuggestions": ["Brand1", "Brand2", "Brand3", "Brand4", "Brand5", "Brand6"]
+}
+
+Make questions natural and helpful. Include popular Indian and international brands.
+
+Return only valid JSON:
+`;
+
+      const response = await geminiService.generateResponse(questionPrompt);
+      const cleanResponse = response.replace(/```json\n?|\n?```/g, '').trim();
+      
+      try {
+        return JSON.parse(cleanResponse);
+      } catch (parseError) {
+        console.error('Failed to parse questions:', parseError);
+        return {
+          questions: [
+            "What's your budget range?",
+            "Do you have any brand preference?",
+            "What size do you need?"
+          ],
+          brandSuggestions: ["Nike", "Adidas", "Puma", "Reebok"]
+        };
+      }
+    } catch (error) {
+      console.error('Error generating questions:', error);
+      return {
+        questions: [
+          "What's your budget range?",
+          "Do you have any brand preference?"
+        ],
+        brandSuggestions: ["Nike", "Adidas", "Puma", "Reebok"]
+      };
+    }
+  }
+
+  private static async generateConversationalResponse(
+    query: string,
+    questions: string[],
+    brandSuggestions: string[],
+    category: string
+  ): Promise<string> {
+    try {
+      const responsePrompt = `
+Generate a helpful, conversational response for this shopping query:
+Query: "${query}"
+Category: "${category}"
+
+The user made a general request, so we need to ask clarifying questions.
+
+Create a response that:
+1. Acknowledges their request enthusiastically
+2. Explains that you can help them find the perfect product
+3. Mentions that you need a bit more information
+4. Naturally incorporates the clarifying questions
+5. Suggests popular brands as options
+6. Keeps it conversational and helpful (like a friendly store assistant)
+
+Available questions: ${questions.join(', ')}
+Brand suggestions: ${brandSuggestions.join(', ')}
+
+Keep response under 100 words and make it sound natural and helpful.
+
+Return only the response text without quotes or formatting:
+`;
+
+      return await geminiService.generateResponse(responsePrompt);
+    } catch (error) {
+      console.error('Error generating conversational response:', error);
+      return `I'd love to help you find the perfect ${category}! To give you the best recommendations, could you tell me a bit more about what you're looking for?`;
+    }
   }
 
   static async processQuery(query: string): Promise<AIResponse> {
@@ -107,49 +193,68 @@ Return only valid JSON:
     }
 
     try {
-      // Analyze the query to understand user intent
-      const analysis = await this.analyzeQuery(query);
+      // Analyze the query intent
+      const intent = await this.analyzeQueryIntent(query);
       
+      // If the query is too general, ask clarifying questions
+      if (intent.needsClarification && !intent.isSpecific) {
+        const { questions, brandSuggestions } = await this.generateClarifyingQuestions(
+          query, 
+          intent.category || 'product', 
+          intent.missingInfo
+        );
+
+        const conversationalResponse = await this.generateConversationalResponse(
+          query,
+          questions,
+          brandSuggestions,
+          intent.category || 'product'
+        );
+
+        // Create suggested actions from questions and brands
+        const questionActions = questions.slice(0, 2);
+        const brandActions = brandSuggestions.slice(0, 4).map(brand => 
+          `${brand} ${intent.category || 'products'}`
+        );
+
+        return {
+          message: conversationalResponse,
+          needsMoreInfo: true,
+          clarifyingQuestions: questions,
+          brandSuggestions,
+          suggestedActions: [...questionActions, ...brandActions]
+        };
+      }
+
+      // If specific enough, proceed with product search
       let products: RealtimeProduct[] = [];
       let message: string;
       let structuredRecommendations: ShoppingAssistantResponse | undefined;
 
-      if (analysis.intent === 'compare' && analysis.productNames && analysis.productNames.length >= 2) {
-        // Handle product comparison
-        const comparisonResult = await RealtimeProductService.getProductComparison(analysis.productNames);
-        products = comparisonResult.products;
-        message = `Here's a detailed comparison of the products you requested:\n\n${comparisonResult.comparison}`;
-      } else {
-        // Handle product search with improved targeting
-        products = await RealtimeProductService.searchProducts(query);
+      products = await RealtimeProductService.searchProducts(query);
 
-        // Get structured recommendations using the shopping assistant
-        if (products.length > 0) {
-          structuredRecommendations = await ShoppingAssistantService.analyzeAndRecommend(query, products);
-          
-          if (structuredRecommendations.success) {
-            message = structuredRecommendations.summary;
-          } else {
-            message = structuredRecommendations.summary;
-          }
+      // Get structured recommendations using the shopping assistant
+      if (products.length > 0) {
+        structuredRecommendations = await ShoppingAssistantService.analyzeAndRecommend(query, products);
+        
+        if (structuredRecommendations.success) {
+          message = structuredRecommendations.summary;
         } else {
-          const suggestions = analysis.brand 
-            ? [`Try "${analysis.brand} ${analysis.category || 'products'}"`, `Browse ${analysis.brand} catalog`]
-            : ['Show popular products', 'Browse categories'];
-            
-          message = `I couldn't find any products matching "${query}". This might be because:
+          message = structuredRecommendations.summary;
+        }
+      } else {
+        message = `I couldn't find any products matching "${query}". This might be because:
 • The specific product model isn't available
 • Try using different keywords or brand names
 • Check spelling of product names
 
 Would you like me to show you popular products in this category instead?`;
-        }
       }
 
       return {
         message,
-        products: products.slice(0, 6), // Limit to top 6 products
-        suggestedActions: this.getSuggestedActions(products, query, analysis),
+        products: products.slice(0, 6),
+        suggestedActions: this.getSuggestedActions(products, query, intent),
         structuredRecommendations
       };
 
@@ -167,6 +272,33 @@ Please try again in a moment, or try a different search query.`,
         suggestedActions: ['Try again', 'Show popular products', 'Help me choose', 'Browse categories']
       };
     }
+  }
+
+  private static getSuggestedActions(products: RealtimeProduct[], query: string, analysis: any): string[] {
+    const lowercaseQuery = query.toLowerCase();
+    
+    if (products.length === 0) {
+      return ['Show popular products', 'Help me choose', 'Try different search', 'Browse categories'];
+    }
+    
+    if (analysis.isSpecific && analysis.hasBrand) {
+      return [
+        `More ${analysis.brand} products`,
+        'Compare with other brands',
+        'Show similar products',
+        'Check specifications'
+      ];
+    }
+    
+    if (products.length === 1) {
+      return ['Find similar products', 'Compare with others', 'Tell me more', 'Check availability'];
+    }
+
+    if (lowercaseQuery.includes('compare')) {
+      return ['Show detailed comparison', 'Help me decide', 'Show more options'];
+    }
+
+    return ['Compare these products', 'Show more details', 'Filter by price', 'Help me choose'];
   }
 
   static async processQuizAnswers(answers: Array<{questionId: string, answer: string}>): Promise<AIResponse> {

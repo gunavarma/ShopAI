@@ -7,6 +7,9 @@ export interface Message {
   hasProducts?: boolean; // New flag for real-time products
   isTyping?: boolean;
   suggestedActions?: string[];
+  clarifyingQuestions?: string[];
+  brandSuggestions?: string[];
+  needsMoreInfo?: boolean;
 }
 
 export interface ChatState {

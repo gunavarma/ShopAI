@@ -1,8 +1,9 @@
 "use client";
 
 import { motion } from 'framer-motion';
-import { Bot, User } from 'lucide-react';
+import { Bot, User, HelpCircle, Tag } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { SuggestedActions } from './suggested-actions';
 import { Message } from '@/types/chat';
 
@@ -90,6 +91,68 @@ export function ChatMessage({ message, onSuggestedAction }: ChatMessageProps) {
             </motion.p>
           )}
         </motion.div>
+
+        {/* Clarifying Questions Section */}
+        {!isUser && message.clarifyingQuestions && message.clarifyingQuestions.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="glass-card rounded-lg p-4 border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <HelpCircle className="w-4 h-4 text-blue-600" />
+              <span className="text-sm font-medium text-blue-700 dark:text-blue-400">
+                Help me understand better:
+              </span>
+            </div>
+            <div className="space-y-2">
+              {message.clarifyingQuestions.map((question, index) => (
+                <motion.button
+                  key={index}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 + index * 0.1 }}
+                  onClick={() => onSuggestedAction?.(question)}
+                  className="block w-full text-left text-sm p-2 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors text-blue-700 dark:text-blue-300"
+                >
+                  • {question}
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Brand Suggestions Section */}
+        {!isUser && message.brandSuggestions && message.brandSuggestions.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="glass-card rounded-lg p-4 border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/20"
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Tag className="w-4 h-4 text-purple-600" />
+              <span className="text-sm font-medium text-purple-700 dark:text-purple-400">
+                Popular brands to consider:
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {message.brandSuggestions.map((brand, index) => (
+                <motion.button
+                  key={index}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.6 + index * 0.05 }}
+                  onClick={() => onSuggestedAction?.(brand)}
+                  className="px-3 py-1 text-xs rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
+                >
+                  {brand}
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
         {!isUser && message.suggestedActions && message.suggestedActions.length > 0 && (
           <motion.div

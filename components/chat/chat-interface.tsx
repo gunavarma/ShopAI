@@ -164,6 +164,12 @@ export function ChatInterface() {
         // Reset filters when new products are loaded
         setCategoryFilter('all');
         setPriceFilter('all');
+      } else {
+        // Clear products if this is a clarifying question response
+        if (response.needsMoreInfo) {
+          setRealtimeProducts([]);
+          setShowFilters(false);
+        }
       }
       
       if (response.structuredRecommendations) {
@@ -176,7 +182,10 @@ export function ChatInterface() {
         role: 'assistant',
         timestamp: Date.now(),
         hasProducts: response.products && response.products.length > 0,
-        suggestedActions: response.suggestedActions
+        suggestedActions: response.suggestedActions,
+        clarifyingQuestions: response.clarifyingQuestions,
+        brandSuggestions: response.brandSuggestions,
+        needsMoreInfo: response.needsMoreInfo
       };
 
       setMessages(prev => [...prev, aiMessage]);
