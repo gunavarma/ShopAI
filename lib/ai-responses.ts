@@ -11,6 +11,7 @@ export interface AIResponse {
   clarifyingQuestions?: string[];
   brandSuggestions?: string[];
   needsMoreInfo?: boolean;
+  category?: string;
 }
 
 export class AIAssistant {
@@ -137,6 +138,7 @@ Return only the response text without quotes or formatting:
         return {
           message: conversationalResponse,
           needsMoreInfo: true,
+          category: intent.category || this.extractCategoryFromQuery(query),
           suggestedActions: ['Browse all products', 'Help me choose', 'Show popular items']
         };
       }
@@ -189,6 +191,60 @@ Please try again in a moment, or try a different search query.`,
     }
   }
 
+  private static extractCategoryFromQuery(query: string): string {
+    const lowercaseQuery = query.toLowerCase();
+    
+    // Category mapping
+    const categoryMap: Record<string, string> = {
+      'shirt': 'clothing',
+      'tshirt': 'clothing',
+      't-shirt': 'clothing',
+      'gym': 'clothing',
+      'workout': 'clothing',
+      'shoes': 'shoes',
+      'sneakers': 'shoes',
+      'running': 'shoes',
+      'phone': 'smartphone',
+      'mobile': 'smartphone',
+      'iphone': 'smartphone',
+      'samsung': 'smartphone',
+      'laptop': 'laptop',
+      'computer': 'laptop',
+      'macbook': 'laptop',
+      'headphones': 'headphones',
+      'earphones': 'headphones',
+      'earbuds': 'headphones',
+      'watch': 'smartwatch',
+      'smartwatch': 'smartwatch',
+      'bag': 'bag',
+      'backpack': 'bag',
+      'furniture': 'furniture',
+      'chair': 'furniture',
+      'table': 'furniture',
+      'kitchen': 'kitchen',
+      'appliance': 'appliance',
+      'fitness': 'fitness',
+      'gym': 'fitness',
+      'beauty': 'beauty',
+      'makeup': 'beauty',
+      'skincare': 'beauty',
+      'book': 'book',
+      'novel': 'book',
+      'toy': 'toy',
+      'game': 'toy',
+      'car': 'automotive',
+      'automotive': 'automotive'
+    };
+
+    for (const [keyword, category] of Object.entries(categoryMap)) {
+      if (lowercaseQuery.includes(keyword)) {
+        return category;
+      }
+    }
+
+    return 'product'; // Default category
+  }
+
   private static getSuggestedActions(products: RealtimeProduct[], query: string, analysis: any): string[] {
     const lowercaseQuery = query.toLowerCase();
     
@@ -214,6 +270,87 @@ Please try again in a moment, or try a different search query.`,
     }
 
     return ['Compare these products', 'Show more details', 'Filter by price', 'Help me choose'];
+  }
+
+  static async processBrandPriceSelection(
+    brand: string,
+    priceRange: string,
+    category: string
+  ): Promise<AIResponse> {
+    try {
+      // Build search query based on selection
+      let searchQuery = '';
+      
+      if (brand !== 'any') {
+        searchQuery += `${brand} `;
+      }
+      
+      searchQuery += category;
+      
+      // Add price range to query if not 'all'
+      if (priceRange !== 'all') {
+        const [min, max] = priceRange.split('-').map(Number);
+        if (max && max < 999999) {
+          searchQuery += ` between ₹${min.toLocaleString()} and ₹${max.toLocaleString()}`;
+        } else {
+          searchQuery += ` above ₹${min.toLocaleString()}`;
+        }
+      }
+
+      console.log('Brand/Price selection search query:', searchQuery);
+
+      // Search for products
+      const products = await RealtimeProductService.searchProducts(searchQuery);
+
+      // Generate response message
+      let message = '';
+      if (products.length > 0) {
+        const brandText = brand !== 'any' ? `${brand} ` : '';
+        const priceText = priceRange !== 'all' ? 
+          ` in your selected price range` : '';
+        
+        message = `Great choice! I found ${products.length} ${brandText}${category} products${priceText}. Here are the best options for you:`;
+      } else {
+        message = `I couldn't find any ${brand !== 'any' ? brand + ' ' : ''}${category} products in your selected price range. Let me show you some alternatives:`;
+        
+        // Fallback search without price constraint
+        const fallbackProducts = await RealtimeProductService.searchProducts(
+          brand !== 'any' ? `${brand} ${category}` : category
+        );
+        
+        if (fallbackProducts.length > 0) {
+          products.push(...fallbackProducts.slice(0, 6));
+          message += ` Here are some ${brand !== 'any' ? brand + ' ' : ''}${category} options:`;
+        }
+      }
+
+      // Get structured recommendations
+      const structuredRecommendations = await ShoppingAssistantService.analyzeAndRecommend(
+        searchQuery,
+        products
+      );
+
+      return {
+        message,
+        products: products.slice(0, 6),
+        suggestedActions: [
+          'Show more options',
+          'Compare these products',
+          'Filter by features',
+          'Change price range'
+        ],
+        structuredRecommendations
+      };
+
+    } catch (error) {
+      console.error('Error processing brand/price selection:', error);
+      
+      return {
+        message: `I encountered an error while searching for ${brand !== 'any' ? brand + ' ' : ''}${category} products. Please try again or browse our popular products.`,
+        products: [],
+        suggestedActions: ['Try again', 'Browse categories', 'Show popular products']
+      };
+    }
   }
 
   static async processQuizAnswers(answers: Array<{questionId: string, answer: string}>): Promise<AIResponse> {

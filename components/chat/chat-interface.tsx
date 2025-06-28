@@ -186,7 +186,7 @@ export function ChatInterface() {
         clarifyingQuestions: response.clarifyingQuestions,
         brandSuggestions: response.brandSuggestions,
         needsMoreInfo: response.needsMoreInfo,
-        category: response.needsMoreInfo ? extractCategoryFromQuery(content) : undefined
+        category: response.category
       };
 
       setMessages(prev => [...prev, aiMessage]);
@@ -213,49 +213,64 @@ export function ChatInterface() {
     }
   };
 
-  const extractCategoryFromQuery = (query: string): string => {
-    const lowercaseQuery = query.toLowerCase();
-    
-    // Category mapping
-    const categoryMap: Record<string, string> = {
-      'shirt': 'clothing',
-      'shoes': 'shoes',
-      'phone': 'smartphone',
-      'laptop': 'laptop',
-      'headphones': 'headphones',
-      'watch': 'smartwatch',
-      'bag': 'bag',
-      'furniture': 'furniture',
-      'kitchen': 'kitchen',
-      'fitness': 'fitness',
-      'beauty': 'beauty',
-      'book': 'book',
-      'toy': 'toy',
-      'car': 'automotive'
-    };
-
-    for (const [keyword, category] of Object.entries(categoryMap)) {
-      if (lowercaseQuery.includes(keyword)) {
-        return category;
-      }
-    }
-
-    return 'product'; // Default category
-  };
-
   const handleBrandPriceSelection = async (brand: string, priceRange: string, category: string) => {
-    let query = `${brand} ${category}`;
-    
-    if (priceRange !== 'all') {
-      const [min, max] = priceRange.split('-').map(Number);
-      if (max) {
-        query += ` between ₹${min.toLocaleString()} and ₹${max.toLocaleString()}`;
-      } else {
-        query += ` above ₹${min.toLocaleString()}`;
-      }
-    }
+    setIsLoading(true);
+    setApiError(null);
 
-    await handleSendMessage(query);
+    // Add typing indicator
+    const typingMessage: Message = {
+      id: 'typing-selection',
+      content: '',
+      role: 'assistant',
+      timestamp: Date.now(),
+      isTyping: true
+    };
+    setMessages(prev => [...prev, typingMessage]);
+
+    try {
+      const response = await AIAssistant.processBrandPriceSelection(brand, priceRange, category);
+      
+      // Remove typing indicator
+      setMessages(prev => prev.filter(msg => msg.id !== 'typing-selection'));
+
+      // Store products and recommendations
+      if (response.products) {
+        setRealtimeProducts(response.products);
+        // Reset filters when new products are loaded
+        setCategoryFilter('all');
+        setPriceFilter('all');
+      }
+      
+      if (response.structuredRecommendations) {
+        setStructuredRecommendations(response.structuredRecommendations);
+      }
+
+      const aiMessage: Message = {
+        id: Date.now().toString(),
+        content: response.message,
+        role: 'assistant',
+        timestamp: Date.now(),
+        hasProducts: response.products && response.products.length > 0,
+        suggestedActions: response.suggestedActions
+      };
+
+      setMessages(prev => [...prev, aiMessage]);
+
+    } catch (error) {
+      console.error('Error processing brand/price selection:', error);
+      setMessages(prev => prev.filter(msg => msg.id !== 'typing-selection'));
+      
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        content: "I encountered an error while searching for products based on your selection. Please try again.",
+        role: 'assistant',
+        timestamp: Date.now(),
+        suggestedActions: ['Try again', 'Browse categories', 'Show popular products']
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSuggestedAction = (action: string) => {
