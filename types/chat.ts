@@ -10,6 +10,7 @@ export interface Message {
   clarifyingQuestions?: string[];
   brandSuggestions?: string[];
   needsMoreInfo?: boolean;
+  category?: string; // For brand/price selection
 }
 
 export interface ChatState {

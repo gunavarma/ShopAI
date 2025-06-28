@@ -115,17 +115,17 @@ export function ChatInterface() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Show filters when products are available
+  useEffect(() => {
+    setShowFilters(realtimeProducts.length > 0);
+  }, [realtimeProducts]);
+
   // Check if Gemini API key is configured
   useEffect(() => {
     if (!process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY === 'your_gemini_api_key_here') {
       setApiError('Gemini API key not configured. Please add your API key to .env.local');
     }
   }, []);
-
-  // Show filters when products are available
-  useEffect(() => {
-    setShowFilters(realtimeProducts.length > 0);
-  }, [realtimeProducts]);
 
   const handleSendMessage = async (content: string) => {
     if (!content.trim()) return;
@@ -185,7 +185,8 @@ export function ChatInterface() {
         suggestedActions: response.suggestedActions,
         clarifyingQuestions: response.clarifyingQuestions,
         brandSuggestions: response.brandSuggestions,
-        needsMoreInfo: response.needsMoreInfo
+        needsMoreInfo: response.needsMoreInfo,
+        category: response.needsMoreInfo ? extractCategoryFromQuery(content) : undefined
       };
 
       setMessages(prev => [...prev, aiMessage]);
@@ -210,6 +211,51 @@ export function ChatInterface() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const extractCategoryFromQuery = (query: string): string => {
+    const lowercaseQuery = query.toLowerCase();
+    
+    // Category mapping
+    const categoryMap: Record<string, string> = {
+      'shirt': 'clothing',
+      'shoes': 'shoes',
+      'phone': 'smartphone',
+      'laptop': 'laptop',
+      'headphones': 'headphones',
+      'watch': 'smartwatch',
+      'bag': 'bag',
+      'furniture': 'furniture',
+      'kitchen': 'kitchen',
+      'fitness': 'fitness',
+      'beauty': 'beauty',
+      'book': 'book',
+      'toy': 'toy',
+      'car': 'automotive'
+    };
+
+    for (const [keyword, category] of Object.entries(categoryMap)) {
+      if (lowercaseQuery.includes(keyword)) {
+        return category;
+      }
+    }
+
+    return 'product'; // Default category
+  };
+
+  const handleBrandPriceSelection = async (brand: string, priceRange: string, category: string) => {
+    let query = `${brand} ${category}`;
+    
+    if (priceRange !== 'all') {
+      const [min, max] = priceRange.split('-').map(Number);
+      if (max) {
+        query += ` between ₹${min.toLocaleString()} and ₹${max.toLocaleString()}`;
+      } else {
+        query += ` above ₹${min.toLocaleString()}`;
+      }
+    }
+
+    await handleSendMessage(query);
   };
 
   const handleSuggestedAction = (action: string) => {
@@ -494,6 +540,7 @@ export function ChatInterface() {
                   <ChatMessage
                     message={message}
                     onSuggestedAction={handleSuggestedAction}
+                    onBrandPriceSelection={handleBrandPriceSelection}
                   />
                   {message.hasProducts && filteredProducts.length > 0 && (
                     <motion.div

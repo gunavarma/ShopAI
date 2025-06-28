@@ -5,15 +5,29 @@ import { Bot, User, HelpCircle, Tag } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { SuggestedActions } from './suggested-actions';
+import { BrandPriceSelector } from './brand-price-selector';
 import { Message } from '@/types/chat';
 
 interface ChatMessageProps {
   message: Message;
   onSuggestedAction?: (action: string) => void;
+  onBrandPriceSelection?: (brand: string, priceRange: string, category: string) => void;
 }
 
-export function ChatMessage({ message, onSuggestedAction }: ChatMessageProps) {
+export function ChatMessage({ message, onSuggestedAction, onBrandPriceSelection }: ChatMessageProps) {
   const isUser = message.role === 'user';
+
+  const handleBrandPriceSelection = (brand: string, priceRange: string) => {
+    if (onBrandPriceSelection && message.category) {
+      onBrandPriceSelection(brand, priceRange, message.category);
+    }
+  };
+
+  const handleSkipSelection = () => {
+    if (onSuggestedAction && message.category) {
+      onSuggestedAction(`Show all ${message.category} products`);
+    }
+  };
 
   return (
     <div className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -92,8 +106,24 @@ export function ChatMessage({ message, onSuggestedAction }: ChatMessageProps) {
           )}
         </motion.div>
 
+        {/* Brand & Price Selection Component */}
+        {!isUser && message.needsMoreInfo && message.category && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="w-full"
+          >
+            <BrandPriceSelector
+              category={message.category}
+              onSelection={handleBrandPriceSelection}
+              onSkip={handleSkipSelection}
+            />
+          </motion.div>
+        )}
+
         {/* Clarifying Questions Section */}
-        {!isUser && message.clarifyingQuestions && message.clarifyingQuestions.length > 0 && (
+        {!isUser && message.clarifyingQuestions && message.clarifyingQuestions.length > 0 && !message.needsMoreInfo && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -124,7 +154,7 @@ export function ChatMessage({ message, onSuggestedAction }: ChatMessageProps) {
         )}
 
         {/* Brand Suggestions Section */}
-        {!isUser && message.brandSuggestions && message.brandSuggestions.length > 0 && (
+        {!isUser && message.brandSuggestions && message.brandSuggestions.length > 0 && !message.needsMoreInfo && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -154,7 +184,7 @@ export function ChatMessage({ message, onSuggestedAction }: ChatMessageProps) {
           </motion.div>
         )}
 
-        {!isUser && message.suggestedActions && message.suggestedActions.length > 0 && (
+        {!isUser && message.suggestedActions && message.suggestedActions.length > 0 && !message.needsMoreInfo && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}

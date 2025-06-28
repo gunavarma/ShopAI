@@ -45,6 +45,9 @@ Examples:
 - "running shoes under 5000" → isSpecific: false, needsClarification: true, missingInfo: ["brand", "size"]
 - "Nike Air Max size 9" → isSpecific: true, needsClarification: false
 
+For general queries like "gym shirt", "running shoes", "laptop", etc., set needsClarification: true
+For specific product names or when brand + model is mentioned, set needsClarification: false
+
 Return only valid JSON:
 `;
 
@@ -71,74 +74,8 @@ Return only valid JSON:
     }
   }
 
-  private static async generateClarifyingQuestions(
-    query: string, 
-    category: string, 
-    missingInfo: string[]
-  ): Promise<{
-    questions: string[];
-    brandSuggestions: string[];
-  }> {
-    try {
-      const questionPrompt = `
-Generate clarifying questions and brand suggestions for this shopping query:
-Query: "${query}"
-Category: "${category}"
-Missing Info: ${missingInfo.join(', ')}
-
-Generate:
-1. 3-4 specific clarifying questions to help narrow down the search
-2. 4-6 popular brand suggestions for this category
-
-For category-specific questions:
-- Clothing: Ask about brand, size, price range, style/fit
-- Shoes: Ask about brand, size, price range, type of activity
-- Electronics: Ask about brand, price range, specific features
-- Fitness: Ask about brand, price range, type of exercise
-
-Return JSON format:
-{
-  "questions": ["Question 1?", "Question 2?", "Question 3?"],
-  "brandSuggestions": ["Brand1", "Brand2", "Brand3", "Brand4", "Brand5", "Brand6"]
-}
-
-Make questions natural and helpful. Include popular Indian and international brands.
-
-Return only valid JSON:
-`;
-
-      const response = await geminiService.generateResponse(questionPrompt);
-      const cleanResponse = response.replace(/```json\n?|\n?```/g, '').trim();
-      
-      try {
-        return JSON.parse(cleanResponse);
-      } catch (parseError) {
-        console.error('Failed to parse questions:', parseError);
-        return {
-          questions: [
-            "What's your budget range?",
-            "Do you have any brand preference?",
-            "What size do you need?"
-          ],
-          brandSuggestions: ["Nike", "Adidas", "Puma", "Reebok"]
-        };
-      }
-    } catch (error) {
-      console.error('Error generating questions:', error);
-      return {
-        questions: [
-          "What's your budget range?",
-          "Do you have any brand preference?"
-        ],
-        brandSuggestions: ["Nike", "Adidas", "Puma", "Reebok"]
-      };
-    }
-  }
-
   private static async generateConversationalResponse(
     query: string,
-    questions: string[],
-    brandSuggestions: string[],
     category: string
   ): Promise<string> {
     try {
@@ -147,20 +84,14 @@ Generate a helpful, conversational response for this shopping query:
 Query: "${query}"
 Category: "${category}"
 
-The user made a general request, so we need to ask clarifying questions.
+The user made a general request, so we need to show them a brand and price selection interface.
 
 Create a response that:
 1. Acknowledges their request enthusiastically
 2. Explains that you can help them find the perfect product
-3. Mentions that you need a bit more information
-4. Naturally incorporates the clarifying questions
-5. Suggests popular brands as options
-6. Keeps it conversational and helpful (like a friendly store assistant)
-
-Available questions: ${questions.join(', ')}
-Brand suggestions: ${brandSuggestions.join(', ')}
-
-Keep response under 100 words and make it sound natural and helpful.
+3. Mentions that you'll show them popular brands and price options to choose from
+4. Keeps it conversational and helpful (like a friendly store assistant)
+5. Keep it under 50 words
 
 Return only the response text without quotes or formatting:
 `;
@@ -168,7 +99,7 @@ Return only the response text without quotes or formatting:
       return await geminiService.generateResponse(responsePrompt);
     } catch (error) {
       console.error('Error generating conversational response:', error);
-      return `I'd love to help you find the perfect ${category}! To give you the best recommendations, could you tell me a bit more about what you're looking for?`;
+      return `I'd love to help you find the perfect ${category}! Let me show you some popular brands and price options to choose from.`;
     }
   }
 
@@ -196,33 +127,17 @@ Return only the response text without quotes or formatting:
       // Analyze the query intent
       const intent = await this.analyzeQueryIntent(query);
       
-      // If the query is too general, ask clarifying questions
+      // If the query is too general, show brand/price selection
       if (intent.needsClarification && !intent.isSpecific) {
-        const { questions, brandSuggestions } = await this.generateClarifyingQuestions(
-          query, 
-          intent.category || 'product', 
-          intent.missingInfo
-        );
-
         const conversationalResponse = await this.generateConversationalResponse(
           query,
-          questions,
-          brandSuggestions,
           intent.category || 'product'
-        );
-
-        // Create suggested actions from questions and brands
-        const questionActions = questions.slice(0, 2);
-        const brandActions = brandSuggestions.slice(0, 4).map(brand => 
-          `${brand} ${intent.category || 'products'}`
         );
 
         return {
           message: conversationalResponse,
           needsMoreInfo: true,
-          clarifyingQuestions: questions,
-          brandSuggestions,
-          suggestedActions: [...questionActions, ...brandActions]
+          suggestedActions: ['Browse all products', 'Help me choose', 'Show popular items']
         };
       }
 
