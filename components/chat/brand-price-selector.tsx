@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Sparkles, Loader2 } from 'lucide-react';
+import { Check, Sparkles, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { geminiService } from '@/lib/gemini';
@@ -35,6 +35,7 @@ export function BrandPriceSelector({ category, onSelection, onSkip }: BrandPrice
   const [priceRanges, setPriceRanges] = useState<PriceRange[]>([]);
   const [isLoadingBrands, setIsLoadingBrands] = useState(true);
   const [isLoadingPrices, setIsLoadingPrices] = useState(true);
+  const [apiError, setApiError] = useState<string>('');
 
   useEffect(() => {
     loadDynamicData();
@@ -43,6 +44,7 @@ export function BrandPriceSelector({ category, onSelection, onSkip }: BrandPrice
   const loadDynamicData = async () => {
     setIsLoadingBrands(true);
     setIsLoadingPrices(true);
+    setApiError('');
     
     try {
       // Load brands and price ranges in parallel
@@ -104,8 +106,11 @@ Return only the JSON array:
         console.error('Failed to parse brands data:', parseError);
         setFallbackBrands();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading brands from Gemini:', error);
+      if (error.message?.includes('quota')) {
+        setApiError('AI service temporarily unavailable. Using default options.');
+      }
       setFallbackBrands();
     } finally {
       setIsLoadingBrands(false);
@@ -159,8 +164,11 @@ Return only the JSON array:
         console.error('Failed to parse price ranges data:', parseError);
         setFallbackPriceRanges();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading price ranges from Gemini:', error);
+      if (error.message?.includes('quota')) {
+        setApiError('AI service temporarily unavailable. Using default options.');
+      }
       setFallbackPriceRanges();
     } finally {
       setIsLoadingPrices(false);
@@ -227,6 +235,18 @@ Return only the JSON array:
           Choose your preferred brand and budget to get personalized recommendations
         </p>
       </div>
+
+      {/* API Error Notice */}
+      {apiError && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800 flex items-center gap-2"
+        >
+          <AlertCircle className="w-4 h-4 text-yellow-600" />
+          <span className="text-sm text-yellow-700 dark:text-yellow-400">{apiError}</span>
+        </motion.div>
+      )}
 
       {/* Brand Selection */}
       <div className="mb-8">
@@ -448,7 +468,7 @@ Return only the JSON array:
       <div className="flex items-center justify-center gap-2 mt-4 p-2 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
         <Sparkles className="w-4 h-4 text-blue-600" />
         <span className="text-sm text-blue-700 dark:text-blue-400">
-          Brands and pricing powered by Gemini AI
+          {apiError ? 'Using default options' : 'Brands and pricing powered by Gemini AI'}
         </span>
       </div>
     </motion.div>
