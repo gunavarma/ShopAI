@@ -2,11 +2,12 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Sparkles, AlertCircle, Zap, ShoppingBag, Plus, Paperclip, Mic, Menu, ShoppingCart, Settings } from 'lucide-react';
+import { Send, Sparkles, AlertCircle, Zap, ShoppingBag, Plus, Paperclip, Mic, Menu, ShoppingCart, Settings, Wifi, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { ChatMessage } from './chat-message';
 import { ProductCarousel } from './product-carousel';
 import { SuggestedActions } from './suggested-actions';
@@ -18,18 +19,18 @@ import { WishlistScreen } from '../wishlist/wishlist-screen';
 import { BooksScreen } from '../books/books-screen';
 import { OrdersScreen } from '../orders/orders-screen';
 import { Message } from '@/types/chat';
-import { AIAssistant } from '@/lib/ai-responses';
-import { RealtimeProduct } from '@/lib/realtime-products';
+import { EnhancedAIAssistant } from '@/lib/ai-responses-enhanced';
+import { EnhancedRealtimeProduct } from '@/lib/realtime-products-enhanced';
 import { ShoppingAssistantResponse } from '@/lib/shopping-assistant';
 
 export function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: "Hello! I'm ShopWhiz, your AI shopping assistant powered by Gemini AI. I can search across ALL product categories - electronics, fashion, home, beauty, sports, books, toys, automotive, and more! Just like Amazon, I'll help you find anything you need. What are you looking for today?",
+      content: "Hello! I'm ShopWhiz, your AI shopping assistant powered by real-time data from Google Shopping and Amazon India. I can search across ALL product categories with live prices, reviews, and availability - just like the best shopping platforms! What are you looking for today?",
       role: 'assistant',
       timestamp: Date.now(),
-      suggestedActions: ['Show me smartphones', 'Find running shoes', 'Kitchen appliances', 'Beauty products', 'Books to read', 'Gaming accessories']
+      suggestedActions: ['iPhone 15 Pro Max', 'Samsung Galaxy S24', 'MacBook Pro M3', 'Sony headphones', 'Nike running shoes', 'Gaming laptops']
     }
   ]);
   const [currentMessage, setCurrentMessage] = useState('');
@@ -41,10 +42,11 @@ export function ChatInterface() {
   const [showBooks, setShowBooks] = useState(false);
   const [showOrders, setShowOrders] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
-  const [realtimeProducts, setRealtimeProducts] = useState<RealtimeProduct[]>([]);
+  const [realtimeProducts, setRealtimeProducts] = useState<EnhancedRealtimeProduct[]>([]);
   const [structuredRecommendations, setStructuredRecommendations] = useState<any>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentChatId, setCurrentChatId] = useState('current');
+  const [dataSource, setDataSource] = useState<'real_time' | 'ai_generated' | 'mixed'>('ai_generated');
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -60,21 +62,30 @@ export function ChatInterface() {
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
-        setSidebarOpen(true); // Open on desktop
+        setSidebarOpen(true);
       } else {
-        setSidebarOpen(false); // Closed on mobile
+        setSidebarOpen(false);
       }
     };
 
-    handleResize(); // Set initial state
+    handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Check if Gemini API key is configured
+  // Check API configuration
   useEffect(() => {
-    if (!process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY === 'your_gemini_api_key_here') {
-      setApiError('Gemini API key not configured. Please add your API key to .env.local');
+    const hasGeminiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY && 
+                        process.env.NEXT_PUBLIC_GEMINI_API_KEY !== 'your_gemini_api_key_here';
+    const hasScraperKey = process.env.NEXT_PUBLIC_SCRAPER_API_KEY && 
+                         process.env.NEXT_PUBLIC_SCRAPER_API_KEY !== 'your_scraper_api_key_here';
+
+    if (!hasGeminiKey) {
+      setApiError('Gemini AI key not configured. Please add your API key to .env.local');
+    } else if (!hasScraperKey) {
+      setApiError('ScraperAPI key not configured. Using AI-generated product data only.');
+    } else {
+      setApiError(null);
     }
   }, []);
 
@@ -93,7 +104,7 @@ export function ChatInterface() {
     setIsLoading(true);
     setApiError(null);
 
-    // Add typing indicator with animation
+    // Add typing indicator
     const typingMessage: Message = {
       id: 'typing',
       content: '',
@@ -104,16 +115,16 @@ export function ChatInterface() {
     setMessages(prev => [...prev, typingMessage]);
 
     try {
-      const response = await AIAssistant.processQuery(content);
+      const response = await EnhancedAIAssistant.processQuery(content);
       
       // Remove typing indicator
       setMessages(prev => prev.filter(msg => msg.id !== 'typing'));
 
-      // Store real-time products and structured recommendations
+      // Store real-time products and data source
       if (response.products) {
         setRealtimeProducts(response.products);
+        setDataSource(response.dataSource || 'ai_generated');
       } else {
-        // Clear products if this is a clarifying question response
         if (response.needsMoreInfo) {
           setRealtimeProducts([]);
         }
@@ -147,7 +158,7 @@ export function ChatInterface() {
       
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: "I'm sorry, I encountered an error while searching for products across our vast catalog. This might be due to API configuration issues or network connectivity. Please try again or check if the Gemini API key is properly set up.",
+        content: "I'm sorry, I encountered an error while searching for products. This might be due to API configuration issues or network connectivity. Please try again or check if the API keys are properly set up.",
         role: 'assistant',
         timestamp: Date.now(),
         suggestedActions: ['Try again', 'Check API setup', 'Show popular products', 'Browse categories']
@@ -164,7 +175,6 @@ export function ChatInterface() {
     setIsLoading(true);
     setApiError(null);
 
-    // Add typing indicator
     const typingMessage: Message = {
       id: 'typing-selection',
       content: '',
@@ -175,14 +185,13 @@ export function ChatInterface() {
     setMessages(prev => [...prev, typingMessage]);
 
     try {
-      const response = await AIAssistant.processBrandPriceSelection(brand, priceRange, category);
+      const response = await EnhancedAIAssistant.processBrandPriceSelection(brand, priceRange, category);
       
-      // Remove typing indicator
       setMessages(prev => prev.filter(msg => msg.id !== 'typing-selection'));
 
-      // Store products and recommendations
       if (response.products) {
         setRealtimeProducts(response.products);
+        setDataSource(response.dataSource || 'ai_generated');
       }
       
       if (response.structuredRecommendations) {
@@ -240,13 +249,13 @@ export function ChatInterface() {
     setMessages(prev => [...prev, typingMessage]);
 
     try {
-      const response = await AIAssistant.processQuizAnswers(answers);
+      const response = await EnhancedAIAssistant.processQuizAnswers(answers);
       
       setMessages(prev => prev.filter(msg => msg.id !== 'typing-quiz'));
 
-      // Store real-time products and structured recommendations
       if (response.products) {
         setRealtimeProducts(response.products);
+        setDataSource(response.dataSource || 'ai_generated');
       }
       
       if (response.structuredRecommendations) {
@@ -269,7 +278,7 @@ export function ChatInterface() {
       
       const errorMessage: Message = {
         id: Date.now().toString(),
-        content: "I encountered an error while processing your quiz responses and searching across our product catalog. Please try again.",
+        content: "I encountered an error while processing your quiz responses. Please try again.",
         role: 'assistant',
         timestamp: Date.now(),
         suggestedActions: ['Try again', 'Browse categories', 'Search directly']
@@ -284,25 +293,48 @@ export function ChatInterface() {
     setMessages([
       {
         id: '1',
-        content: "Hello! I'm ShopWhiz, your AI shopping assistant. What are you looking for today?",
+        content: "Hello! I'm ShopWhiz, your AI shopping assistant with real-time product data. What are you looking for today?",
         role: 'assistant',
         timestamp: Date.now(),
-        suggestedActions: ['Show me smartphones', 'Find running shoes', 'Kitchen appliances', 'Beauty products']
+        suggestedActions: ['iPhone 15 Pro Max', 'Samsung Galaxy S24', 'MacBook Pro M3', 'Sony headphones']
       }
     ]);
     setRealtimeProducts([]);
     setStructuredRecommendations(null);
     setCurrentChatId(Date.now().toString());
+    setDataSource('ai_generated');
   };
 
   const handleChatSelect = (chatId: string) => {
     setCurrentChatId(chatId);
-    // In a real app, you would load the chat history here
+  };
+
+  const getDataSourceInfo = () => {
+    switch (dataSource) {
+      case 'real_time':
+        return {
+          icon: <Wifi className="w-4 h-4 text-green-500" />,
+          text: 'Live data from Google Shopping & Amazon',
+          color: 'text-green-600'
+        };
+      case 'mixed':
+        return {
+          icon: <Zap className="w-4 h-4 text-blue-500" />,
+          text: 'Real-time + AI recommendations',
+          color: 'text-blue-600'
+        };
+      default:
+        return {
+          icon: <Sparkles className="w-4 h-4 text-purple-500" />,
+          text: 'AI-powered recommendations',
+          color: 'text-purple-600'
+        };
+    }
   };
 
   return (
     <div className="flex h-screen relative">
-      {/* Absolute Positioned Sidebar */}
+      {/* Sidebar */}
       <Sidebar
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
@@ -316,7 +348,7 @@ export function ChatInterface() {
         currentChatId={currentChatId}
       />
 
-      {/* Sidebar Toggle Button - Mobile Only */}
+      {/* Mobile Sidebar Toggle */}
       <motion.button
         onClick={() => setSidebarOpen(!sidebarOpen)}
         className="fixed top-4 left-4 z-50 w-10 h-10 rounded-full bg-primary/10 backdrop-blur-sm border border-primary/20 flex items-center justify-center hover:bg-primary/20 transition-colors lg:hidden"
@@ -326,7 +358,7 @@ export function ChatInterface() {
         <Menu className="w-5 h-5 text-primary" />
       </motion.button>
 
-      {/* Logo - Only show when sidebar is closed on desktop */}
+      {/* Logo - Desktop when sidebar closed */}
       <AnimatePresence>
         {!sidebarOpen && (
           <motion.div
@@ -343,7 +375,7 @@ export function ChatInterface() {
         )}
       </AnimatePresence>
 
-      {/* Settings Icon - Bottom when sidebar closed */}
+      {/* Settings Icon - Desktop when sidebar closed */}
       <AnimatePresence>
         {!sidebarOpen && (
           <motion.button
@@ -360,7 +392,7 @@ export function ChatInterface() {
         )}
       </AnimatePresence>
 
-      {/* Main Chat Area - Full Width */}
+      {/* Main Chat Area */}
       <div className="flex flex-col h-screen w-full">
         {/* API Error Alert */}
         {apiError && (
@@ -373,9 +405,14 @@ export function ChatInterface() {
               <AlertCircle className="h-4 w-4" />
               <AlertDescription className="text-sm">
                 {apiError}
-                {apiError.includes('API key') && (
+                {apiError.includes('Gemini') && (
                   <span className="block mt-1 text-xs text-muted-foreground">
                     Get your free API key from <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="underline">Google AI Studio</a>
+                  </span>
+                )}
+                {apiError.includes('ScraperAPI') && (
+                  <span className="block mt-1 text-xs text-muted-foreground">
+                    Get your API key from <a href="https://www.scraperapi.com/" target="_blank" rel="noopener noreferrer" className="underline">ScraperAPI</a> for real-time product data
                   </span>
                 )}
               </AlertDescription>
@@ -383,13 +420,29 @@ export function ChatInterface() {
           </motion.div>
         )}
 
-        {/* Clean Header - Minimal Design */}
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-end p-4"
+          className="flex items-center justify-between p-4"
         >
-          {/* Cart Button - Right Side Only */}
+          {/* Data Source Indicator */}
+          <div className="flex items-center gap-2">
+            {realtimeProducts.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex items-center gap-2 px-3 py-1 bg-muted/30 rounded-full"
+              >
+                {getDataSourceInfo().icon}
+                <span className={`text-xs font-medium ${getDataSourceInfo().color}`}>
+                  {getDataSourceInfo().text}
+                </span>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Cart Button */}
           <Button
             variant="outline"
             size="sm"
@@ -403,7 +456,7 @@ export function ChatInterface() {
           </Button>
         </motion.div>
 
-        {/* Messages Area - Full Width */}
+        {/* Messages Area */}
         <ScrollArea className="flex-1 scrollbar-thin">
           <div className="p-4 space-y-6 w-full max-w-4xl mx-auto">
             <AnimatePresence mode="wait">
@@ -448,13 +501,12 @@ export function ChatInterface() {
           </div>
         </ScrollArea>
 
-        {/* Modern Input Area with Shining Border - Full Width */}
+        {/* Input Area */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="p-6 w-full"
         >
-          {/* Input Container with Shining Border */}
           <div className="relative max-w-4xl mx-auto">
             <form
               onSubmit={(e) => {
@@ -467,9 +519,8 @@ export function ChatInterface() {
               <div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-purple-500 to-primary rounded-2xl opacity-30 blur-sm animate-pulse"></div>
               <div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-purple-500 to-primary rounded-2xl opacity-20 animate-pulse" style={{ animationDelay: '0.5s' }}></div>
               
-              {/* Main Input Field */}
+              {/* Input Field */}
               <div className="relative flex items-center bg-background/95 backdrop-blur-sm border border-border/50 rounded-2xl px-4 py-3 focus-within:border-primary/50 focus-within:bg-background/80 transition-all duration-200 shadow-lg">
-                {/* Attachment Button */}
                 <Button
                   type="button"
                   variant="ghost"
@@ -479,19 +530,16 @@ export function ChatInterface() {
                   <Paperclip className="w-4 h-4 text-muted-foreground" />
                 </Button>
 
-                {/* Text Input */}
                 <input
                   value={currentMessage}
                   onChange={(e) => setCurrentMessage(e.target.value)}
-                  placeholder="Ask me anything..."
+                  placeholder="Search for any product..."
                   disabled={isLoading}
                   className="flex-1 bg-transparent border-0 outline-none text-sm placeholder:text-muted-foreground/70 resize-none"
                   style={{ minHeight: '20px' }}
                 />
 
-                {/* Action Buttons */}
                 <div className="flex items-center gap-1 ml-2">
-                  {/* Voice Input Button */}
                   <Button
                     type="button"
                     variant="ghost"
@@ -501,7 +549,6 @@ export function ChatInterface() {
                     <Mic className="w-4 h-4 text-muted-foreground" />
                   </Button>
 
-                  {/* Send Button */}
                   <Button
                     type="submit"
                     disabled={isLoading || !currentMessage.trim()}
