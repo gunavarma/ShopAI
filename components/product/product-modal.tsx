@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Star, TrendingUp, ShoppingCart, Heart, Share2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Star, TrendingUp, ShoppingCart, Heart, Share2, ChevronLeft, ChevronRight, Play, User, Calendar } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -80,7 +80,7 @@ export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalP
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="glass-card border-primary/30 max-w-4xl max-h-[90vh] p-0 overflow-hidden">
+      <DialogContent className="glass-card border-primary/30 max-w-6xl max-h-[90vh] p-0 overflow-hidden">
         <DialogHeader>
           <DialogTitle className="sr-only">
             {product.name} - Product Details
@@ -102,7 +102,7 @@ export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalP
         {/* Scrollable Content */}
         <ScrollArea className="flex-1 max-h-[calc(90vh-120px)]">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6">
-            {/* Product Images */}
+            {/* Product Images and Video */}
             <div className="space-y-4">
               {/* Main Image Display */}
               <motion.div
@@ -175,6 +175,31 @@ export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalP
                     </button>
                   ))}
                 </div>
+              )}
+
+              {/* YouTube Video */}
+              {product.youtubeVideoId && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="space-y-3"
+                >
+                  <div className="flex items-center gap-2">
+                    <Play className="w-5 h-5 text-red-500" />
+                    <h4 className="font-semibold">Product Review Video</h4>
+                  </div>
+                  <div className="aspect-video rounded-lg overflow-hidden bg-muted">
+                    <iframe
+                      src={`https://www.youtube.com/embed/${product.youtubeVideoId}`}
+                      title={`${product.name} Review`}
+                      className="w-full h-full"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                </motion.div>
               )}
               
               {/* Real-time indicator */}
@@ -278,36 +303,85 @@ export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalP
           {/* Detailed Information Tabs */}
           <div className="px-6 pb-6">
             <Tabs defaultValue="reviews" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="reviews">AI Review Analysis</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="reviews">Reviews & Analysis</TabsTrigger>
                 <TabsTrigger value="specs">Specifications</TabsTrigger>
                 <TabsTrigger value="realtime">Real-time Data</TabsTrigger>
+                <TabsTrigger value="user-reviews">User Reviews</TabsTrigger>
               </TabsList>
               
               <TabsContent value="reviews" className="space-y-4 mt-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="glass-card rounded-lg p-4">
-                    <h5 className="font-semibold text-green-600 mb-3">Pros</h5>
-                    <ul className="space-y-2">
-                      {product.pros.map((pro, index) => (
-                        <li key={index} className="flex items-start gap-2 text-sm">
-                          <span className="text-green-500 mt-1">•</span>
-                          {pro}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                <div className="glass-card rounded-lg p-6">
+                  <h5 className="font-semibold mb-3">AI Review Summary</h5>
+                  <p className="text-muted-foreground mb-4">{product.reviewSummary}</p>
                   
-                  <div className="glass-card rounded-lg p-4">
-                    <h5 className="font-semibold text-red-600 mb-3">Cons</h5>
-                    <ul className="space-y-2">
-                      {product.cons.map((con, index) => (
-                        <li key={index} className="flex items-start gap-2 text-sm">
-                          <span className="text-red-500 mt-1">•</span>
-                          {con}
-                        </li>
-                      ))}
-                    </ul>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="glass-card rounded-lg p-4">
+                      <h5 className="font-semibold text-green-600 mb-3">Pros</h5>
+                      <ul className="space-y-2">
+                        {product.pros.map((pro, index) => (
+                          <li key={index} className="flex items-start gap-2 text-sm">
+                            <span className="text-green-500 mt-1">•</span>
+                            {pro}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    <div className="glass-card rounded-lg p-4">
+                      <h5 className="font-semibold text-red-600 mb-3">Cons</h5>
+                      <ul className="space-y-2">
+                        {product.cons.map((con, index) => (
+                          <li key={index} className="flex items-start gap-2 text-sm">
+                            <span className="text-red-500 mt-1">•</span>
+                            {con}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="user-reviews" className="mt-6">
+                <div className="glass-card rounded-lg p-6">
+                  <h5 className="font-semibold mb-4">Recent User Reviews</h5>
+                  <div className="space-y-4">
+                    {product.sampleReviews.map((review, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="border border-border/50 rounded-lg p-4"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <User className="w-4 h-4 text-muted-foreground" />
+                            <span className="font-medium text-sm">{review.reviewer}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
+                              {Array.from({ length: 5 }).map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`w-3 h-3 ${
+                                    i < review.rating
+                                      ? 'fill-yellow-400 text-yellow-400'
+                                      : 'text-muted-foreground'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Calendar className="w-3 h-3" />
+                              <span>{new Date(review.date).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{review.text}</p>
+                      </motion.div>
+                    ))}
                   </div>
                 </div>
               </TabsContent>
@@ -343,7 +417,7 @@ export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalP
                   </div>
                   <div className="space-y-3 text-sm">
                     <p className="text-muted-foreground">
-                      This product information and related images are fetched in real-time using Gemini AI to provide you with the most current data and visual context available.
+                      This product information, reviews, and related images are fetched in real-time using Gemini AI to provide you with the most current data and visual context available.
                     </p>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -361,6 +435,16 @@ export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalP
                       <div>
                         <span className="font-medium">Related Images:</span>
                         <p className="text-muted-foreground">{relatedImages.length} images</p>
+                      </div>
+                      <div>
+                        <span className="font-medium">Reviews:</span>
+                        <p className="text-muted-foreground">{product.sampleReviews.length} sample reviews</p>
+                      </div>
+                      <div>
+                        <span className="font-medium">Video Review:</span>
+                        <p className="text-muted-foreground">
+                          {product.youtubeVideoId ? 'Available' : 'Not available'}
+                        </p>
                       </div>
                     </div>
                   </div>

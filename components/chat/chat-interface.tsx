@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Sparkles, AlertCircle, Zap, ShoppingBag, Plus, Paperclip, Mic, Menu, ShoppingCart, Settings } from 'lucide-react';
+import { Send, Sparkles, AlertCircle, Zap, ShoppingBag, Plus, Paperclip, Mic, Menu, ShoppingCart, Settings, Filter, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { ChatMessage } from './chat-message';
 import { ProductCarousel } from './product-carousel';
 import { SuggestedActions } from './suggested-actions';
@@ -20,6 +22,7 @@ import { OrdersScreen } from '../orders/orders-screen';
 import { Message } from '@/types/chat';
 import { AIAssistant } from '@/lib/ai-responses';
 import { RealtimeProduct } from '@/lib/realtime-products';
+import { ShoppingAssistantResponse } from '@/lib/shopping-assistant';
 
 export function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([
@@ -44,7 +47,50 @@ export function ChatInterface() {
   const [structuredRecommendations, setStructuredRecommendations] = useState<any>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentChatId, setCurrentChatId] = useState('current');
+  
+  // Filter states
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [priceFilter, setPriceFilter] = useState('all');
+  const [showFilters, setShowFilters] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Available categories and price ranges
+  const categories = [
+    'all', 'smartphone', 'laptop', 'monitor', 'headphones', 'smartwatch', 
+    'tablet', 'camera', 'speaker', 'keyboard', 'mouse', 'clothing', 'shoes', 
+    'bag', 'watch', 'furniture', 'appliance', 'kitchen', 'fitness', 'sports', 
+    'beauty', 'skincare', 'book', 'toy', 'game', 'automotive', 'car'
+  ];
+
+  const priceRanges = [
+    { value: 'all', label: 'All Prices' },
+    { value: '0-10000', label: 'Under ₹10,000' },
+    { value: '10000-25000', label: '₹10,000 - ₹25,000' },
+    { value: '25000-50000', label: '₹25,000 - ₹50,000' },
+    { value: '50000-100000', label: '₹50,000 - ₹1,00,000' },
+    { value: '100000-999999', label: 'Above ₹1,00,000' }
+  ];
+
+  // Filter products based on selected filters
+  const filteredProducts = useMemo(() => {
+    if (!realtimeProducts || realtimeProducts.length === 0) return [];
+
+    return realtimeProducts.filter(product => {
+      // Category filter
+      const matchesCategory = categoryFilter === 'all' || 
+        product.category.toLowerCase() === categoryFilter.toLowerCase();
+
+      // Price filter
+      let matchesPrice = true;
+      if (priceFilter !== 'all') {
+        const [min, max] = priceFilter.split('-').map(Number);
+        matchesPrice = product.price >= min && product.price <= max;
+      }
+
+      return matchesCategory && matchesPrice;
+    });
+  }, [realtimeProducts, categoryFilter, priceFilter]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -75,6 +121,11 @@ export function ChatInterface() {
       setApiError('Gemini API key not configured. Please add your API key to .env.local');
     }
   }, []);
+
+  // Show filters when products are available
+  useEffect(() => {
+    setShowFilters(realtimeProducts.length > 0);
+  }, [realtimeProducts]);
 
   const handleSendMessage = async (content: string) => {
     if (!content.trim()) return;
@@ -110,6 +161,9 @@ export function ChatInterface() {
       // Store real-time products and structured recommendations
       if (response.products) {
         setRealtimeProducts(response.products);
+        // Reset filters when new products are loaded
+        setCategoryFilter('all');
+        setPriceFilter('all');
       }
       
       if (response.structuredRecommendations) {
@@ -179,6 +233,9 @@ export function ChatInterface() {
       // Store real-time products and structured recommendations
       if (response.products) {
         setRealtimeProducts(response.products);
+        // Reset filters when new products are loaded
+        setCategoryFilter('all');
+        setPriceFilter('all');
       }
       
       if (response.structuredRecommendations) {
@@ -225,11 +282,20 @@ export function ChatInterface() {
     setRealtimeProducts([]);
     setStructuredRecommendations(null);
     setCurrentChatId(Date.now().toString());
+    // Reset filters
+    setCategoryFilter('all');
+    setPriceFilter('all');
+    setShowFilters(false);
   };
 
   const handleChatSelect = (chatId: string) => {
     setCurrentChatId(chatId);
     // In a real app, you would load the chat history here
+  };
+
+  const clearFilters = () => {
+    setCategoryFilter('all');
+    setPriceFilter('all');
   };
 
   return (
@@ -335,6 +401,70 @@ export function ChatInterface() {
           </Button>
         </motion.div>
 
+        {/* Product Filters */}
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="border-b border-border/50 bg-background/95 backdrop-blur-sm"
+            >
+              <div className="max-w-4xl mx-auto p-4">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Filters:</span>
+                  </div>
+                  
+                  <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map(category => (
+                        <SelectItem key={category} value={category}>
+                          {category === 'all' ? 'All Categories' : category.charAt(0).toUpperCase() + category.slice(1)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={priceFilter} onValueChange={setPriceFilter}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Price Range" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {priceRanges.map(range => (
+                        <SelectItem key={range.value} value={range.value}>
+                          {range.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {(categoryFilter !== 'all' || priceFilter !== 'all') && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearFilters}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      Clear Filters
+                    </Button>
+                  )}
+
+                  <div className="flex items-center gap-2 ml-auto">
+                    <Badge variant="secondary" className="text-xs">
+                      {filteredProducts.length} of {realtimeProducts.length} products
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Messages Area - Full Width */}
         <ScrollArea className="flex-1 scrollbar-thin">
           <div className="p-4 space-y-6 w-full max-w-4xl mx-auto">
@@ -356,7 +486,7 @@ export function ChatInterface() {
                     message={message}
                     onSuggestedAction={handleSuggestedAction}
                   />
-                  {message.hasProducts && realtimeProducts.length > 0 && (
+                  {message.hasProducts && filteredProducts.length > 0 && (
                     <motion.div
                       initial={{ opacity: 0, scale: 0.9, y: 20 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -369,10 +499,7 @@ export function ChatInterface() {
                       }}
                       className="mt-4"
                     >
-                      <ProductCarousel 
-                        products={realtimeProducts} 
-                        structuredRecommendations={structuredRecommendations}
-                      />
+                      <ProductCarousel products={filteredProducts} />
                     </motion.div>
                   )}
                 </motion.div>

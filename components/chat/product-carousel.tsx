@@ -8,14 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { RealtimeProduct } from '@/lib/realtime-products';
 import { ProductModal } from '../product/product-modal';
 import { PaymentModal } from '../payment/payment-modal';
-import { ShoppingAssistantResponse } from '@/lib/shopping-assistant';
 
 interface ProductCarouselProps {
   products: RealtimeProduct[];
-  structuredRecommendations?: ShoppingAssistantResponse;
 }
 
-export function ProductCarousel({ products, structuredRecommendations }: ProductCarouselProps) {
+export function ProductCarousel({ products }: ProductCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedProduct, setSelectedProduct] = useState<RealtimeProduct | null>(null);
   const [paymentProduct, setPaymentProduct] = useState<RealtimeProduct | null>(null);

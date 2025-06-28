@@ -46,3 +46,11 @@ export interface ShoppingAssistantResponse {
   clarifyingQuestions?: string[];
   success: boolean;
 }
+
+// Enhanced Product Review Types
+export interface ProductReview {
+  rating: number;
+  text: string;
+  reviewer: string;
+  date: string;
+}

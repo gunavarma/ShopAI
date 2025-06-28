@@ -19,6 +19,14 @@ export interface RealtimeProduct {
   inStock: boolean;
   availability: string;
   specifications: Record<string, string>;
+  youtubeVideoId?: string;
+  reviewSummary: string;
+  sampleReviews: Array<{
+    rating: number;
+    text: string;
+    reviewer: string;
+    date: string;
+  }>;
 }
 
 export class RealtimeProductService {
@@ -212,7 +220,10 @@ export class RealtimeProductService {
       description: productInfo.description,
       inStock: productInfo.inStock !== false,
       availability: productInfo.availability || 'In Stock',
-      specifications: productInfo.specifications || {}
+      specifications: productInfo.specifications || {},
+      youtubeVideoId: productInfo.youtubeVideoId,
+      reviewSummary: productInfo.reviewSummary || 'Great product with positive user feedback.',
+      sampleReviews: productInfo.sampleReviews || []
     };
   }
 
@@ -291,6 +302,25 @@ Product Requirements:
 - rating: 3.8-4.7 range
 - reviewCount: 100-3000 range
 - specifications: Detailed technical specs
+- youtubeVideoId: Generate realistic YouTube video ID (11 characters, alphanumeric)
+- reviewSummary: 2-3 sentence summary of user reviews
+- sampleReviews: Array of 3-4 realistic user reviews with rating (1-5), text (1-2 sentences), reviewer name, and date
+
+Example sampleReviews format:
+"sampleReviews": [
+  {
+    "rating": 5,
+    "text": "Excellent product, works perfectly as expected. Great value for money!",
+    "reviewer": "Rajesh K.",
+    "date": "2024-01-15"
+  },
+  {
+    "rating": 4,
+    "text": "Good quality but delivery was a bit slow. Overall satisfied with the purchase.",
+    "reviewer": "Priya S.",
+    "date": "2024-01-10"
+  }
+]
 
 Return only JSON array without markdown:
 `;
