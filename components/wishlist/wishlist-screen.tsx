@@ -34,6 +34,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { PriceAlertModal } from './price-alert-modal';
 import { useAuth } from '@/contexts/auth-context';
+import { Loader2 } from 'lucide-react';
 import { WishlistAPI, PriceAlertsAPI } from '@/lib/database';
 import { ProtectedRoute } from '../auth/protected-route';
 

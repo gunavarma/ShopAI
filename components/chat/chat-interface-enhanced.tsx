@@ -29,6 +29,9 @@ import { useRealtimeChat } from '@/lib/hooks/use-realtime-chat';
 import { useRealtimeAnalytics } from '@/lib/hooks/use-realtime-analytics';
 import { toast } from 'sonner';
 
+// Add missing Loader2 icon import
+import { Loader2 } from 'lucide-react';
+
 export function ChatInterfaceEnhanced() {
   const { isAuthenticated, user } = useAuth();
   const {

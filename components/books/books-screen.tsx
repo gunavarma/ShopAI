@@ -27,6 +27,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/auth-context';
+import { WishlistAPI, CartAPI } from '@/lib/database';
 
 interface BookItem {
   id: string;
@@ -56,6 +58,7 @@ interface BooksScreenProps {
 }
 
 export function BooksScreen({ open, onClose }: BooksScreenProps) {
+  const { isAuthenticated, user } = useAuth();
   const [books] = useState<BookItem[]>([
     {
       id: '1',
@@ -189,6 +192,7 @@ export function BooksScreen({ open, onClose }: BooksScreenProps) {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedFormat, setSelectedFormat] = useState('all');
   const [sortBy, setSortBy] = useState('popularity');
+  const [loading, setLoading] = useState(false);
 
   const categories = ['all', 'fiction', 'self-help', 'business', 'finance', 'history', 'spirituality'];
   const formats = ['all', 'paperback', 'hardcover', 'ebook', 'audiobook'];
@@ -219,21 +223,97 @@ export function BooksScreen({ open, onClose }: BooksScreenProps) {
     });
 
   const addToWishlist = (bookId: string) => {
-    const book = books.find(b => b.id === bookId);
-    if (book) {
-      toast.success('Added to wishlist', {
-        description: `${book.title} has been added to your wishlist`
-      });
+    if (!isAuthenticated) {
+      toast.error('Please sign in to add items to your wishlist');
+      return;
     }
+    
+    if (!user) return;
+    
+    const book = books.find(b => b.id === bookId);
+    if (!book) return;
+    
+    setLoading(true);
+    
+    // Add to wishlist in database
+    const wishlistItem = {
+      user_id: user.id,
+      product_id: book.id,
+      product_name: book.title,
+      product_brand: book.author,
+      product_image: book.image,
+      current_price: book.price,
+      original_price: book.originalPrice,
+      category: book.genre.toLowerCase(),
+      rating: book.rating,
+      review_count: book.reviewCount,
+      in_stock: book.inStock,
+      availability: book.inStock ? 'In Stock' : 'Out of Stock',
+      alert_enabled: false,
+      source: 'ai_generated'
+    };
+    
+    WishlistAPI.addToWishlist(wishlistItem)
+      .then(() => {
+        toast.success('Added to wishlist', {
+          description: `${book.title} has been added to your wishlist`
+        });
+      })
+      .catch(error => {
+        console.error('Error adding to wishlist:', error);
+        if (error.message?.includes('already in wishlist')) {
+          toast.error('Book already in wishlist');
+        } else {
+          toast.error('Failed to add to wishlist');
+        }
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   const addToCart = (bookId: string) => {
-    const book = books.find(b => b.id === bookId);
-    if (book) {
-      toast.success('Added to cart', {
-        description: `${book.title} has been added to your cart`
-      });
+    if (!isAuthenticated) {
+      toast.error('Please sign in to add items to your cart');
+      return;
     }
+    
+    if (!user) return;
+    
+    const book = books.find(b => b.id === bookId);
+    if (!book) return;
+    
+    setLoading(true);
+    
+    // Add to cart in database
+    const cartItem = {
+      user_id: user.id,
+      product_id: book.id,
+      product_name: book.title,
+      product_brand: book.author,
+      product_image: book.image,
+      price: book.price,
+      original_price: book.originalPrice,
+      quantity: 1,
+      category: book.genre.toLowerCase(),
+      rating: book.rating,
+      in_stock: book.inStock,
+      source: 'ai_generated'
+    };
+    
+    CartAPI.addToCart(cartItem)
+      .then(() => {
+        toast.success('Added to cart', {
+          description: `${book.title} has been added to your cart`
+        });
+      })
+      .catch(error => {
+        console.error('Error adding to cart:', error);
+        toast.error('Failed to add to cart');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   const bestsellers = books.filter(book => book.bestseller);
@@ -436,8 +516,8 @@ export function BooksScreen({ open, onClose }: BooksScreenProps) {
                               <Button
                                 size="sm"
                                 onClick={() => addToCart(book.id)}
+                                disabled={loading || !book.inStock}
                                 className="flex-1"
-                                disabled={!book.inStock}
                               >
                                 <ShoppingCart className="w-3 h-3 mr-1" />
                                 {book.inStock ? 'Add to Cart' : 'Out of Stock'}

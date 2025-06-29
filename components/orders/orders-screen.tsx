@@ -33,6 +33,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth-context';
+import { Loader2 } from 'lucide-react';
 import { OrdersAPI } from '@/lib/database';
 import { ProtectedRoute } from '../auth/protected-route';
 

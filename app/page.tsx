@@ -1,8 +1,14 @@
 "use client";
 
 import { motion } from 'framer-motion';
-import { ChatInterfaceEnhanced } from '@/components/chat/chat-interface-enhanced';
+import dynamic from 'next/dynamic';
 import { ClientOnly } from '@/components/client-only';
+
+// Dynamically import the enhanced chat interface to avoid hydration issues
+const ChatInterfaceEnhanced = dynamic(
+  () => import('@/components/chat/chat-interface-enhanced').then(mod => ({ default: mod.ChatInterfaceEnhanced })),
+  { ssr: false }
+);
 
 export default function Home() {
   return (

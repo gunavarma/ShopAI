@@ -26,6 +26,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth-context';
 import { ProtectedRoute } from '../auth/protected-route';
+import { Loader2 } from 'lucide-react';
 import { CartAPI } from '@/lib/database';
 
 interface CartItem {
