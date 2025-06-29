@@ -429,7 +429,7 @@ export function ChatInterface() {
                 )}
                 {apiError.includes('No AI providers') && (
                   <span className="block mt-1 text-xs text-muted-foreground">
-                    Get Gemini AI key from <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="underline">Google AI Studio</a> or DeepSeek key from <a href="https://platform.deepseek.com/" target="_blank" rel="noopener noreferrer" className="underline">DeepSeek Platform</a>
+                    Get Gemini AI key from <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="underline">Google AI Studio</a> or DeepSeek key from <a href="https://platform.deepseek.com/" target=\"_blank" rel="noopener noreferrer\" className="underline">DeepSeek Platform</a>
                   </span>
                 )}
                 {apiError.includes('ScraperAPI') && (
