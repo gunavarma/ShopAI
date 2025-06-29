@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, 
@@ -20,7 +20,8 @@ import {
   Filter,
   Eye,
   RotateCcw,
-  ShoppingBag
+  ShoppingBag,
+  Loader2
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -33,7 +34,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth-context';
-import { Loader2 } from 'lucide-react';
 import { OrdersAPI } from '@/lib/database';
 import { ProtectedRoute } from '../auth/protected-route';
 
@@ -80,7 +80,7 @@ interface OrdersScreenProps {
 }
 
 export function OrdersScreen({ open, onClose }: OrdersScreenProps) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -449,115 +449,116 @@ export function OrdersScreen({ open, onClose }: OrdersScreenProps) {
                   )}
                 </AnimatePresence>
               </ScrollArea>
-            </div>
-          </ProtectedRoute>
-        </DialogContent>
-      </Dialog>
+            )}
+          </div>
+        </ProtectedRoute>
+      </DialogContent>
+    </Dialog>
 
-      {/* Order Tracking Modal */}
-      {selectedOrder && (
-        <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden">
-            <DialogHeader>
-              <DialogTitle>Track Order #{selectedOrder.orderNumber}</DialogTitle>
-            </DialogHeader>
-            
-            <ScrollArea className="max-h-[70vh]">
-              <div className="space-y-6 p-1">
-                {/* Order Status */}
-                <div className="text-center">
-                  <Badge className={`${getStatusColor(selectedOrder.status)} text-lg px-4 py-2`}>
-                    {getStatusIcon(selectedOrder.status)}
-                    <span className="ml-2 capitalize">{selectedOrder.status}</span>
-                  </Badge>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    {selectedOrder.status === 'delivered' && selectedOrder.actualDelivery
-                      ? `Delivered on ${formatDate(selectedOrder.actualDelivery)}`
-                      : `Expected delivery: ${formatDate(selectedOrder.estimatedDelivery)}`
-                    }
-                  </p>
-                </div>
+    {/* Order Tracking Modal */}
+    {selectedOrder && (
+      <Dialog open={!!selectedOrder} onOpenChange={() => setSelectedOrder(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>Track Order #{selectedOrder.orderNumber}</DialogTitle>
+          </DialogHeader>
+          
+          <ScrollArea className="max-h-[70vh]">
+            <div className="space-y-6 p-1">
+              {/* Order Status */}
+              <div className="text-center">
+                <Badge className={`${getStatusColor(selectedOrder.status)} text-lg px-4 py-2`}>
+                  {getStatusIcon(selectedOrder.status)}
+                  <span className="ml-2 capitalize">{selectedOrder.status}</span>
+                </Badge>
+                <p className="text-sm text-muted-foreground mt-2">
+                  {selectedOrder.status === 'delivered' && selectedOrder.actualDelivery
+                    ? `Delivered on ${formatDate(selectedOrder.actualDelivery)}`
+                    : `Expected delivery: ${formatDate(selectedOrder.estimatedDelivery)}`
+                  }
+                </p>
+              </div>
 
-                {/* Timeline */}
+              {/* Timeline */}
+              <div className="space-y-4">
+                <h3 className="font-semibold">Order Timeline</h3>
                 <div className="space-y-4">
-                  <h3 className="font-semibold">Order Timeline</h3>
-                  <div className="space-y-4">
-                    {selectedOrder.timeline.map((event, index) => (
-                      <div key={index} className="flex gap-4">
-                        <div className="flex flex-col items-center">
-                          <div className={`w-3 h-3 rounded-full ${
-                            index === 0 ? 'bg-primary' : 'bg-muted'
-                          }`} />
-                          {index < selectedOrder.timeline.length - 1 && (
-                            <div className="w-px h-8 bg-border mt-2" />
-                          )}
-                        </div>
-                        <div className="flex-1 pb-4">
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-medium">{event.status}</h4>
-                            <span className="text-sm text-muted-foreground">
-                              {formatDate(event.timestamp)}
-                            </span>
-                          </div>
-                          <p className="text-sm text-muted-foreground">{event.description}</p>
-                          {event.location && (
-                            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                              <MapPin className="w-3 h-3" />
-                              {event.location}
-                            </p>
-                          )}
-                        </div>
+                  {selectedOrder.timeline.map((event, index) => (
+                    <div key={index} className="flex gap-4">
+                      <div className="flex flex-col items-center">
+                        <div className={`w-3 h-3 rounded-full ${
+                          index === 0 ? 'bg-primary' : 'bg-muted'
+                        }`} />
+                        {index < selectedOrder.timeline.length - 1 && (
+                          <div className="w-px h-8 bg-border mt-2" />
+                        )}
                       </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Shipping Address */}
-                <div>
-                  <h3 className="font-semibold mb-3">Shipping Address</h3>
-                  <div className="glass-card rounded-lg p-4">
-                    <p className="font-medium">{selectedOrder.shippingAddress.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedOrder.shippingAddress.address}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.pincode}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {selectedOrder.shippingAddress.phone}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Order Items */}
-                <div>
-                  <h3 className="font-semibold mb-3">Order Items</h3>
-                  <div className="space-y-3">
-                    {selectedOrder.items.map((item) => (
-                      <div key={item.id} className="flex items-center gap-3 glass-card rounded-lg p-3">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-16 h-16 rounded-lg object-cover"
-                        />
-                        <div className="flex-1">
-                          <h4 className="font-medium">{item.name}</h4>
-                          <p className="text-sm text-muted-foreground">{item.brand}</p>
-                          <div className="flex items-center gap-2 text-sm">
-                            <span>Qty: {item.quantity}</span>
-                            <span>•</span>
-                            <span className="font-medium">₹{item.price.toLocaleString()}</span>
-                          </div>
+                      <div className="flex-1 pb-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-medium">{event.status}</h4>
+                          <span className="text-sm text-muted-foreground">
+                            {formatDate(event.timestamp)}
+                          </span>
                         </div>
+                        <p className="text-sm text-muted-foreground">{event.description}</p>
+                        {event.location && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
+                            <MapPin className="w-3 h-3" />
+                            {event.location}
+                          </p>
+                        )}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </ScrollArea>
-          </DialogContent>
-        </Dialog>
-      )}
-    </>
+
+              {/* Shipping Address */}
+              <div>
+                <h3 className="font-semibold mb-3">Shipping Address</h3>
+                <div className="glass-card rounded-lg p-4">
+                  <p className="font-medium">{selectedOrder.shippingAddress.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedOrder.shippingAddress.address}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.pincode}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedOrder.shippingAddress.phone}
+                  </p>
+                </div>
+              </div>
+
+              {/* Order Items */}
+              <div>
+                <h3 className="font-semibold mb-3">Order Items</h3>
+                <div className="space-y-3">
+                  {selectedOrder.items.map((item) => (
+                    <div key={item.id} className="flex items-center gap-3 glass-card rounded-lg p-3">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-16 h-16 rounded-lg object-cover"
+                      />
+                      <div className="flex-1">
+                        <h4 className="font-medium">{item.name}</h4>
+                        <p className="text-sm text-muted-foreground">{item.brand}</p>
+                        <div className="flex items-center gap-2 text-sm">
+                          <span>Qty: {item.quantity}</span>
+                          <span>•</span>
+                          <span className="font-medium">₹{item.price.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+    )}
+  </>
   );
 }
