@@ -279,18 +279,11 @@ Return only the JSON array:
                   </div>
                 )}
 
-                {/* Brand Logo */}
-                <div className="flex flex-col items-center gap-2">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold ${
-                    selectedBrand === brand.name
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-muted-foreground'
-                  }`}>
-                    {brand.logo}
-                  </div>
-                  <span className="text-sm font-medium">{brand.name}</span>
+                {/* Brand Content */}
+                <div className="flex flex-col items-center gap-2 text-center">
+                  <span className="text-base font-semibold">{brand.name}</span>
                   {brand.description && (
-                    <span className="text-xs text-muted-foreground text-center">
+                    <span className="text-xs text-muted-foreground">
                       {brand.description}
                     </span>
                   )}
