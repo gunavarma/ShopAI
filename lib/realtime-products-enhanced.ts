@@ -129,7 +129,6 @@ Return only valid JSON:
 `;
 
       const response = await geminiService.generateResponse(enhancementPrompt);
-      const response = await AIService.generateResponse(enhancementPrompt);
       const cleanResponse = response.replace(/```json\n?|\n?```/g, '').trim();
       
       let enhancements;
@@ -266,7 +265,6 @@ Return only valid JSON array:
 `;
 
       const response = await geminiService.generateResponse(searchPrompt);
-      const response = await AIService.generateResponse(searchPrompt);
       const cleanResponse = response.replace(/```json\n?|\n?```/g, '').trim();
       
       let productsData;
