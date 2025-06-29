@@ -324,29 +324,6 @@ export function ChatInterface() {
     setCurrentChatId(chatId);
   };
 
-  const getDataSourceInfo = () => {
-    switch (dataSource) {
-      case 'real_time':
-        return {
-          icon: <Wifi className="w-4 h-4 text-green-500" />,
-          text: 'Live data from Google Shopping & Amazon',
-          color: 'text-green-600'
-        };
-      case 'mixed':
-        return {
-          icon: <Zap className="w-4 h-4 text-blue-500" />,
-          text: 'Real-time + AI recommendations',
-          color: 'text-blue-600'
-        };
-      default:
-        return {
-          icon: <Sparkles className="w-4 h-4 text-purple-500" />,
-          text: 'AI-powered recommendations',
-          color: 'text-purple-600'
-        };
-    }
-  };
-
   return (
     <div className="flex h-screen relative">
       {/* Sidebar */}
@@ -441,21 +418,8 @@ export function ChatInterface() {
           animate={{ opacity: 1, y: 0 }}
           className="flex items-center justify-between p-4"
         >
-          {/* Data Source Indicator */}
-          <div className="flex items-center gap-2">
-            {realtimeProducts.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="flex items-center gap-2 px-3 py-1 bg-muted/30 rounded-full"
-              >
-                {getDataSourceInfo().icon}
-                <span className={`text-xs font-medium ${getDataSourceInfo().color}`}>
-                  {getDataSourceInfo().text}
-                </span>
-              </motion.div>
-            )}
-          </div>
+          {/* Empty space for balance */}
+          <div></div>
 
           {/* Cart Button */}
           <Button
