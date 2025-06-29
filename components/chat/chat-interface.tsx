@@ -22,8 +22,12 @@ import { Message } from '@/types/chat';
 import { EnhancedAIAssistant } from '@/lib/ai-responses-enhanced';
 import { EnhancedRealtimeProduct } from '@/lib/realtime-products-enhanced';
 import { ShoppingAssistantResponse } from '@/lib/shopping-assistant';
+import { useAuth } from '@/contexts/auth-context';
+import { AuthModal } from '../auth/auth-modal';
+import { ProfileDropdown } from '../auth/profile-dropdown';
 
 export function ChatInterface() {
+  const { isAuthenticated, user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -47,6 +51,7 @@ export function ChatInterface() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentChatId, setCurrentChatId] = useState('current');
   const [dataSource, setDataSource] = useState<'real_time' | 'ai_generated' | 'mixed'>('ai_generated');
+  const [showAuthModal, setShowAuthModal] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -443,17 +448,38 @@ export function ChatInterface() {
           </div>
 
           {/* Cart Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowCart(true)}
-            className="relative"
-          >
-            <ShoppingCart className="w-4 h-4" />
-            <span className="absolute -top-2 -right-2 w-5 h-5 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center">
-              3
-            </span>
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowCart(true)}
+              className="relative"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              <span className="absolute -top-2 -right-2 w-5 h-5 bg-primary text-primary-foreground text-xs rounded-full flex items-center justify-center">
+                3
+              </span>
+            </Button>
+
+            {/* Authentication */}
+            {isAuthenticated ? (
+              <ProfileDropdown
+                onSettingsClick={() => setShowSettings(true)}
+                onCartClick={() => setShowCart(true)}
+                onWishlistClick={() => setShowWishlist(true)}
+                onOrdersClick={() => setShowOrders(true)}
+              />
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAuthModal(true)}
+              >
+                <User className="w-4 h-4 mr-2" />
+                Sign In
+              </Button>
+            )}
+          </div>
         </motion.div>
 
         {/* Messages Area */}
@@ -603,6 +629,12 @@ export function ChatInterface() {
       <OrdersScreen
         open={showOrders}
         onClose={() => setShowOrders(false)}
+      />
+
+      <AuthModal
+        open={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        defaultMode="login"
       />
     </div>
   );

@@ -38,6 +38,9 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useAuth } from '@/contexts/auth-context';
+import { AuthModal } from '../auth/auth-modal';
+import { ProfileDropdown } from '../auth/profile-dropdown';
 
 interface ChatHistory {
   id: string;
@@ -74,6 +77,8 @@ export function Sidebar({
 }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const { theme, setTheme } = useTheme();
+  const { isAuthenticated, user } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Mock chat history data with number timestamps
   const [chatHistory] = useState<ChatHistory[]>([
@@ -194,6 +199,30 @@ export function Sidebar({
             <div className="p-4 border-b border-border/50">
               <div className="flex items-center gap-3 mb-4">
                 
+                {/* User Profile Section */}
+                {isAuthenticated ? (
+                  <div className="flex items-center gap-3 mb-4">
+                    <ProfileDropdown
+                      onSettingsClick={onSettingsClick}
+                      onCartClick={onCartClick}
+                      onWishlistClick={onWishlistClick}
+                      onOrdersClick={onOrdersClick}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 mb-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowAuthModal(true)}
+                      className="flex-1"
+                    >
+                      <User className="w-4 h-4 mr-2" />
+                      Sign In
+                    </Button>
+                  </div>
+                )}
+
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <div className="w-6 h-6 rounded-full bg-gradient-to-r from-primary to-purple-400 flex items-center justify-center">
@@ -407,6 +436,12 @@ export function Sidebar({
             </div>
           </motion.div>
         )}
+
+        <AuthModal
+          open={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          defaultMode="login"
+        />
       </motion.aside>
     </TooltipProvider>
   );
