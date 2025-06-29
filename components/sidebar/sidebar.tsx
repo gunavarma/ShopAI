@@ -141,6 +141,8 @@ export function Sidebar({
 
   return (
     <TooltipProvider>
+      {/* Mobile Overlay - Only show when sidebar is open on mobile */}
+    
       {/* Absolute Positioned Sidebar */}
     <motion.aside
   initial={false}
