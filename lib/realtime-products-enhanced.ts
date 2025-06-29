@@ -1,6 +1,5 @@
 import { geminiService } from './gemini';
 import { ScraperAPIService, ScrapedProduct } from './scraper-api';
-import { SerpApiService, SerpProduct } from './serp-api';
 
 export interface EnhancedRealtimeProduct {
   id: string;
@@ -46,31 +45,18 @@ export class EnhancedRealtimeProductService {
     const { useRealData = true, maxResults = 8 } = options;
 
     try {
-      let realProducts: (ScrapedProduct | SerpProduct)[] = [];
+      let scrapedProducts: ScrapedProduct[] = [];
       
-      // First, try to get real product data if API keys are available
-      if (useRealData) {
+      // First, try to get real product data if API key is available
+      if (useRealData && process.env.NEXT_PUBLIC_SCRAPER_API_KEY) {
         console.log('Fetching real product data for:', query);
-        
-        // Try SERP API first (preferred)
-        if (process.env.NEXT_PUBLIC_SERP_API_KEY) {
-          console.log('Using SERP API for Google Shopping data');
-          const serpProducts = await SerpApiService.searchGoogleShopping(query);
-          realProducts = realProducts.concat(serpProducts);
-        }
-        
-        // Fallback to ScraperAPI if available
-        if (realProducts.length === 0 && process.env.SCRAPER_API_KEY) {
-          console.log('Falling back to ScraperAPI');
-          const scrapedProducts = await ScraperAPIService.searchMultipleSources(query, options);
-          realProducts = realProducts.concat(scrapedProducts);
-        }
+        scrapedProducts = await ScraperAPIService.searchMultipleSources(query, options);
       }
 
       // If we have real data, enhance it with AI
-      if (realProducts.length > 0) {
-        console.log(`Found ${realProducts.length} real products, enhancing with AI...`);
-        return await this.enhanceRealProducts(realProducts, query);
+      if (scrapedProducts.length > 0) {
+        console.log(`Found ${scrapedProducts.length} real products, enhancing with AI...`);
+        return await this.enhanceScrapedProducts(scrapedProducts, query);
       }
 
       // Fallback to AI-generated products if no real data
@@ -84,8 +70,8 @@ export class EnhancedRealtimeProductService {
     }
   }
 
-  private static async enhanceRealProducts(
-    realProducts: (ScrapedProduct | SerpProduct)[],
+  private static async enhanceScrapedProducts(
+    scrapedProducts: ScrapedProduct[],
     query: string
   ): Promise<EnhancedRealtimeProduct[]> {
     try {
@@ -93,11 +79,11 @@ export class EnhancedRealtimeProductService {
 Enhance these real product listings with additional details for the search query: "${query}"
 
 Real Products:
-${realProducts.map((p, i) => `
+${scrapedProducts.map((p, i) => `
 ${i + 1}. ${p.title}
    - Price: ₹${p.price.toLocaleString()}
    - Rating: ${p.rating}/5 (${p.reviewCount} reviews)
-   - Brand: ${p.brand || 'Unknown'}
+   - Brand: ${p.brand}
    - Source: ${p.source}
    - URL: ${p.url}
 `).join('\n')}
@@ -150,78 +136,78 @@ Return only valid JSON:
         enhancements = JSON.parse(cleanResponse);
       } catch (parseError) {
         console.error('Failed to parse enhancements:', parseError);
-        return this.createBasicEnhancedProducts(realProducts);
+        return this.createBasicEnhancedProducts(scrapedProducts);
       }
 
-      // Merge real data with AI enhancements
+      // Merge scraped data with AI enhancements
       const enhancedProducts: EnhancedRealtimeProduct[] = [];
       
-      realProducts.forEach((real, index) => {
+      scrapedProducts.forEach((scraped, index) => {
         const enhancement = enhancements.products?.find((e: any) => e.index === index) || {};
         
         enhancedProducts.push({
-          id: real.id,
-          name: real.title,
-          price: real.price,
-          originalPrice: real.originalPrice,
-          image: real.image || this.getProductImage(enhancement.category || 'product'),
-          rating: real.rating,
-          reviewCount: real.reviewCount,
-          brand: real.brand || 'Unknown',
-          category: enhancement.category || this.extractCategoryFromTitle(real.title),
+          id: scraped.id,
+          name: scraped.title,
+          price: scraped.price,
+          originalPrice: scraped.originalPrice,
+          image: scraped.image || this.getProductImage(enhancement.category || 'product'),
+          rating: scraped.rating,
+          reviewCount: scraped.reviewCount,
+          brand: scraped.brand || 'Unknown',
+          category: enhancement.category || this.extractCategoryFromTitle(scraped.title),
           features: enhancement.features || [],
           pros: enhancement.pros || [],
           cons: enhancement.cons || [],
           sentiment: enhancement.sentiment || 'positive',
           sentimentScore: enhancement.sentimentScore || 75,
-          description: real.description || real.title,
-          inStock: real.availability !== 'Out of Stock',
-          availability: real.availability,
+          description: scraped.description || scraped.title,
+          inStock: scraped.availability !== 'Out of Stock',
+          availability: scraped.availability,
           specifications: enhancement.specifications || {},
           youtubeVideoId: enhancement.youtubeVideoId,
           reviewSummary: enhancement.reviewSummary || 'Great product with positive user feedback.',
           sampleReviews: enhancement.sampleReviews || [],
-          source: real.source,
-          productUrl: real.url,
-          seller: real.seller,
-          shipping: real.shipping
+          source: scraped.source,
+          productUrl: scraped.url,
+          seller: scraped.seller,
+          shipping: scraped.shipping
         });
       });
 
       return enhancedProducts;
 
     } catch (error) {
-      console.error('Error enhancing real products:', error);
-      return this.createBasicEnhancedProducts(realProducts);
+      console.error('Error enhancing scraped products:', error);
+      return this.createBasicEnhancedProducts(scrapedProducts);
     }
   }
 
-  private static createBasicEnhancedProducts(realProducts: (ScrapedProduct | SerpProduct)[]): EnhancedRealtimeProduct[] {
-    return realProducts.map(real => ({
-      id: real.id,
-      name: real.title,
-      price: real.price,
-      originalPrice: real.originalPrice,
-      image: real.image || this.getProductImage('product'),
-      rating: real.rating,
-      reviewCount: real.reviewCount,
-      brand: real.brand || 'Unknown',
-      category: this.extractCategoryFromTitle(real.title),
+  private static createBasicEnhancedProducts(scrapedProducts: ScrapedProduct[]): EnhancedRealtimeProduct[] {
+    return scrapedProducts.map(scraped => ({
+      id: scraped.id,
+      name: scraped.title,
+      price: scraped.price,
+      originalPrice: scraped.originalPrice,
+      image: scraped.image || this.getProductImage('product'),
+      rating: scraped.rating,
+      reviewCount: scraped.reviewCount,
+      brand: scraped.brand || 'Unknown',
+      category: this.extractCategoryFromTitle(scraped.title),
       features: [],
       pros: ['Good quality', 'Value for money'],
       cons: ['Limited availability'],
       sentiment: 'positive',
       sentimentScore: 75,
-      description: real.description || real.title,
-      inStock: real.availability !== 'Out of Stock',
-      availability: real.availability,
+      description: scraped.description || scraped.title,
+      inStock: scraped.availability !== 'Out of Stock',
+      availability: scraped.availability,
       specifications: {},
       reviewSummary: 'Product has received positive feedback from users.',
       sampleReviews: [],
-      source: real.source,
-      productUrl: real.url,
-      seller: real.seller,
-      shipping: real.shipping
+      source: scraped.source,
+      productUrl: scraped.url,
+      seller: scraped.seller,
+      shipping: scraped.shipping
     }));
   }
 

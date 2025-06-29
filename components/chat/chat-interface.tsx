@@ -77,17 +77,13 @@ export function ChatInterface() {
   useEffect(() => {
     const hasGeminiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY && 
                         process.env.NEXT_PUBLIC_GEMINI_API_KEY !== 'your_gemini_api_key_here';
-    
-    // Check for both SERP API and ScraperAPI keys
-    const hasSerpKey = process.env.NEXT_PUBLIC_SERP_API_KEY && 
-                      process.env.NEXT_PUBLIC_SERP_API_KEY !== 'your_serp_api_key_here';
     const hasScraperKey = process.env.NEXT_PUBLIC_SCRAPER_API_KEY && 
                          process.env.NEXT_PUBLIC_SCRAPER_API_KEY !== 'your_scraper_api_key_here';
 
     if (!hasGeminiKey) {
       setApiError('Gemini AI key not configured. Please add your API key to .env.local');
-    } else if (!hasSerpKey && !hasScraperKey) {
-      setApiError('Real-time data API key not configured. Add SERP API or ScraperAPI key to .env.local for live product data.');
+    } else if (!hasScraperKey) {
+      setApiError('ScraperAPI key not configured. Using AI-generated product data only.');
     } else {
       setApiError(null);
     }
@@ -406,9 +402,9 @@ export function ChatInterface() {
                     Get your free API key from <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="underline">Google AI Studio</a>
                   </span>
                 )}
-                {apiError.includes('Real-time data API') && (
+                {apiError.includes('ScraperAPI') && (
                   <span className="block mt-1 text-xs text-muted-foreground">
-                    Get SERP API key from <a href="https://serpapi.com/" target="_blank" rel="noopener noreferrer" className="underline">SerpApi</a> or ScraperAPI key from <a href="https://www.scraperapi.com/" target=\"_blank" rel="noopener noreferrer\" className="underline">ScraperAPI</a>
+                    Get your API key from <a href="https://www.scraperapi.com/" target="_blank" rel="noopener noreferrer" className="underline">ScraperAPI</a> for real-time product data
                   </span>
                 )}
               </AlertDescription>
