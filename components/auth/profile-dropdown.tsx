@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/auth-context';
 import { toast } from 'sonner';
+import { CartAPI, WishlistAPI, OrdersAPI } from '@/lib/database';
 
 interface ProfileDropdownProps {
   onSettingsClick?: () => void;
@@ -41,9 +42,37 @@ export function ProfileDropdown({
   onOrdersClick 
 }: ProfileDropdownProps) {
   const { user, logout } = useAuth();
+  const [cartCount, setCartCount] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState(0);
+  const [orderCount, setOrderCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
 
   if (!user) return null;
+
+  // Fetch counts from database
+  useEffect(() => {
+    const fetchCounts = async () => {
+      if (!user) return;
+      
+      try {
+        // Get cart count
+        const cartItems = await CartAPI.getCart(user.id);
+        setCartCount(cartItems.length);
+        
+        // Get wishlist count
+        const wishlistItems = await WishlistAPI.getWishlist(user.id);
+        setWishlistCount(wishlistItems.length);
+        
+        // Get order count
+        const orders = await OrdersAPI.getOrders(user.id);
+        setOrderCount(orders.length);
+      } catch (error) {
+        console.error('Error fetching counts:', error);
+      }
+    };
+    
+    fetchCounts();
+  }, [user]);
 
   const handleLogout = async () => {
     try {
@@ -122,7 +151,7 @@ export function ProfileDropdown({
           <Package className="mr-2 h-4 w-4" />
           <span>My Orders</span>
           <Badge variant="secondary" className="ml-auto text-xs">
-            3
+            {orderCount}
           </Badge>
         </DropdownMenuItem>
 
@@ -130,7 +159,7 @@ export function ProfileDropdown({
           <Heart className="mr-2 h-4 w-4" />
           <span>Wishlist</span>
           <Badge variant="secondary" className="ml-auto text-xs">
-            12
+            {wishlistCount}
           </Badge>
         </DropdownMenuItem>
 
@@ -138,7 +167,7 @@ export function ProfileDropdown({
           <ShoppingBag className="mr-2 h-4 w-4" />
           <span>Shopping Cart</span>
           <Badge variant="secondary" className="ml-auto text-xs">
-            5
+            {cartCount}
           </Badge>
         </DropdownMenuItem>
 

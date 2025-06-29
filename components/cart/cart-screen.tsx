@@ -26,6 +26,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth-context';
 import { ProtectedRoute } from '../auth/protected-route';
+import { CartAPI } from '@/lib/database';
 
 interface CartItem {
   id: string;
@@ -47,60 +48,95 @@ interface CartScreenProps {
 
 export function CartScreen({ open, onClose }: CartScreenProps) {
   const { isAuthenticated } = useAuth();
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: '1',
-      name: 'Apple Watch Series 9 GPS 45mm',
-      brand: 'Apple',
-      price: 42900,
-      originalPrice: 45900,
-      image: 'https://images.pexels.com/photos/437037/pexels-photo-437037.jpeg?auto=compress&cs=tinysrgb&w=400',
-      quantity: 1,
-      inStock: true,
-      rating: 4.8,
-      category: 'smartwatch'
-    },
-    {
-      id: '2',
-      name: 'Sony WH-1000XM5 Wireless Headphones',
-      brand: 'Sony',
-      price: 29990,
-      originalPrice: 34990,
-      image: 'https://images.pexels.com/photos/3394650/pexels-photo-3394650.jpeg?auto=compress&cs=tinysrgb&w=400',
-      quantity: 2,
-      inStock: true,
-      rating: 4.7,
-      category: 'headphones'
-    },
-    {
-      id: '3',
-      name: 'MacBook Air M2 13-inch',
-      brand: 'Apple',
-      price: 114900,
-      originalPrice: 119900,
-      image: 'https://images.pexels.com/photos/205421/pexels-photo-205421.jpeg?auto=compress&cs=tinysrgb&w=400',
-      quantity: 1,
-      inStock: false,
-      rating: 4.9,
-      category: 'laptop'
-    }
-  ]);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
 
+  // Fetch cart items from database
+  useEffect(() => {
+    const fetchCartItems = async () => {
+      if (!isAuthenticated || !user) {
+        setCartItems([]);
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        setLoading(true);
+        const items = await CartAPI.getCart(user.id);
+        
+        // Transform database items to component format
+        const transformedItems = items.map(item => ({
+          id: item.id,
+          name: item.product_name,
+          brand: item.product_brand,
+          price: item.price,
+          originalPrice: item.original_price,
+          image: item.product_image,
+          quantity: item.quantity,
+          inStock: item.in_stock,
+          rating: item.rating,
+          category: item.category
+        }));
+        
+        setCartItems(transformedItems);
+      } catch (error) {
+        console.error('Error fetching cart items:', error);
+        toast.error('Failed to load cart items');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCartItems();
+  }, [isAuthenticated, user]);
+
   const updateQuantity = (id: string, newQuantity: number) => {
     if (newQuantity < 1) return;
-    setCartItems(items => 
-      items.map(item => 
-        item.id === id ? { ...item, quantity: newQuantity } : item
-      )
-    );
+    
+    if (isAuthenticated && user) {
+      // Update in database
+      CartAPI.updateQuantity(user.id, id, newQuantity)
+        .then(() => {
+          setCartItems(items => 
+            items.map(item => 
+              item.id === id ? { ...item, quantity: newQuantity } : item
+            )
+          );
+        })
+        .catch(error => {
+          console.error('Error updating quantity:', error);
+          toast.error('Failed to update quantity');
+        });
+    } else {
+      // Just update local state for non-authenticated users
+      setCartItems(items => 
+        items.map(item => 
+          item.id === id ? { ...item, quantity: newQuantity } : item
+        )
+      );
+    }
   };
 
   const removeItem = (id: string) => {
-    setCartItems(items => items.filter(item => item.id !== id));
-    toast.success('Item removed from cart');
+    if (isAuthenticated && user) {
+      // Remove from database
+      CartAPI.removeFromCart(user.id, id)
+        .then(() => {
+          setCartItems(items => items.filter(item => item.id !== id));
+          toast.success('Item removed from cart');
+        })
+        .catch(error => {
+          console.error('Error removing item:', error);
+          toast.error('Failed to remove item');
+        });
+    } else {
+      // Just update local state for non-authenticated users
+      setCartItems(items => items.filter(item => item.id !== id));
+      toast.success('Item removed from cart');
+    }
   };
 
   const moveToWishlist = (id: string) => {
@@ -159,25 +195,30 @@ export function CartScreen({ open, onClose }: CartScreenProps) {
           <div className="grid grid-cols-1 lg:grid-cols-3 min-h-[600px]">
             {/* Cart Items - Left Side */}
             <div className="lg:col-span-2 p-6">
-              <ScrollArea className="h-[500px]">
-                <AnimatePresence>
-                  {cartItems.length === 0 ? (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="text-center py-12"
-                    >
-                      <ShoppingCart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">Your cart is empty</h3>
-                      <p className="text-muted-foreground mb-4">
-                        Start shopping to add items to your cart
-                        {!isAuthenticated && '. Sign in to save your cart across devices.'}
-                      </p>
-                      <Button onClick={onClose}>Continue Shopping</Button>
-                    </motion.div>
-                  ) : (
-                    <div className="space-y-4">
-                      {cartItems.map((item, index) => (
+              {loading ? (
+                <div className="flex items-center justify-center h-[500px]">
+                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <ScrollArea className="h-[500px]">
+                  <AnimatePresence>
+                    {cartItems.length === 0 ? (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-center py-12"
+                      >
+                        <ShoppingCart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold mb-2">Your cart is empty</h3>
+                        <p className="text-muted-foreground mb-4">
+                          Start shopping to add items to your cart
+                          {!isAuthenticated && '. Sign in to save your cart across devices.'}
+                        </p>
+                        <Button onClick={onClose}>Continue Shopping</Button>
+                      </motion.div>
+                    ) : (
+                      <div className="space-y-4">
+                        {cartItems.map((item, index) => (
                         <motion.div
                           key={item.id}
                           initial={{ opacity: 0, y: 20 }}

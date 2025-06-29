@@ -33,6 +33,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth-context';
+import { OrdersAPI } from '@/lib/database';
 import { ProtectedRoute } from '../auth/protected-route';
 
 interface OrderItem {
@@ -79,173 +80,70 @@ interface OrdersScreenProps {
 
 export function OrdersScreen({ open, onClose }: OrdersScreenProps) {
   const { isAuthenticated } = useAuth();
-  const [orders] = useState<Order[]>([
-    {
-      id: '1',
-      orderNumber: 'SW2024001',
-      status: 'delivered',
-      items: [
-        {
-          id: '1',
-          name: 'Apple iPhone 15 Pro Max 256GB',
-          brand: 'Apple',
-          price: 134900,
-          quantity: 1,
-          image: 'https://images.pexels.com/photos/699122/pexels-photo-699122.jpeg?auto=compress&cs=tinysrgb&w=400',
-          category: 'smartphone'
-        }
-      ],
-      totalAmount: 134900,
-      orderDate: '2024-01-15T10:30:00Z',
-      estimatedDelivery: '2024-01-20T18:00:00Z',
-      actualDelivery: '2024-01-19T16:30:00Z',
-      shippingAddress: {
-        name: 'John Doe',
-        address: '123 Tech Street, Sector 5',
-        city: 'Mumbai',
-        pincode: '400001',
-        phone: '+91 9876543210'
-      },
-      trackingNumber: 'SW1234567890',
-      paymentMethod: 'Credit Card',
-      paymentStatus: 'paid',
-      timeline: [
-        {
-          status: 'Order Placed',
-          timestamp: '2024-01-15T10:30:00Z',
-          description: 'Your order has been placed successfully'
-        },
-        {
-          status: 'Payment Confirmed',
-          timestamp: '2024-01-15T10:35:00Z',
-          description: 'Payment received and confirmed'
-        },
-        {
-          status: 'Order Confirmed',
-          timestamp: '2024-01-15T11:00:00Z',
-          description: 'Order confirmed and being prepared'
-        },
-        {
-          status: 'Shipped',
-          timestamp: '2024-01-16T14:20:00Z',
-          location: 'Mumbai Warehouse',
-          description: 'Package shipped from Mumbai warehouse'
-        },
-        {
-          status: 'Out for Delivery',
-          timestamp: '2024-01-19T09:00:00Z',
-          location: 'Mumbai Local Hub',
-          description: 'Package out for delivery'
-        },
-        {
-          status: 'Delivered',
-          timestamp: '2024-01-19T16:30:00Z',
-          location: 'Mumbai',
-          description: 'Package delivered successfully'
-        }
-      ]
-    },
-    {
-      id: '2',
-      orderNumber: 'SW2024002',
-      status: 'shipped',
-      items: [
-        {
-          id: '2',
-          name: 'Sony WH-1000XM5 Wireless Headphones',
-          brand: 'Sony',
-          price: 29990,
-          quantity: 1,
-          image: 'https://images.pexels.com/photos/3394650/pexels-photo-3394650.jpeg?auto=compress&cs=tinysrgb&w=400',
-          category: 'headphones'
-        },
-        {
-          id: '3',
-          name: 'Apple Watch Series 9 GPS 45mm',
-          brand: 'Apple',
-          price: 42900,
-          quantity: 1,
-          image: 'https://images.pexels.com/photos/437037/pexels-photo-437037.jpeg?auto=compress&cs=tinysrgb&w=400',
-          category: 'smartwatch'
-        }
-      ],
-      totalAmount: 72890,
-      orderDate: '2024-02-01T15:45:00Z',
-      estimatedDelivery: '2024-02-05T18:00:00Z',
-      shippingAddress: {
-        name: 'John Doe',
-        address: '123 Tech Street, Sector 5',
-        city: 'Mumbai',
-        pincode: '400001',
-        phone: '+91 9876543210'
-      },
-      trackingNumber: 'SW1234567891',
-      paymentMethod: 'UPI',
-      paymentStatus: 'paid',
-      timeline: [
-        {
-          status: 'Order Placed',
-          timestamp: '2024-02-01T15:45:00Z',
-          description: 'Your order has been placed successfully'
-        },
-        {
-          status: 'Payment Confirmed',
-          timestamp: '2024-02-01T15:50:00Z',
-          description: 'UPI payment received and confirmed'
-        },
-        {
-          status: 'Order Confirmed',
-          timestamp: '2024-02-01T16:15:00Z',
-          description: 'Order confirmed and being prepared'
-        },
-        {
-          status: 'Shipped',
-          timestamp: '2024-02-02T11:30:00Z',
-          location: 'Delhi Warehouse',
-          description: 'Package shipped from Delhi warehouse'
-        }
-      ]
-    },
-    {
-      id: '3',
-      orderNumber: 'SW2024003',
-      status: 'pending',
-      items: [
-        {
-          id: '4',
-          name: 'MacBook Pro 14" M3 Pro 512GB',
-          brand: 'Apple',
-          price: 199900,
-          quantity: 1,
-          image: 'https://images.pexels.com/photos/205421/pexels-photo-205421.jpeg?auto=compress&cs=tinysrgb&w=400',
-          category: 'laptop'
-        }
-      ],
-      totalAmount: 199900,
-      orderDate: '2024-02-03T09:20:00Z',
-      estimatedDelivery: '2024-02-08T18:00:00Z',
-      shippingAddress: {
-        name: 'John Doe',
-        address: '123 Tech Street, Sector 5',
-        city: 'Mumbai',
-        pincode: '400001',
-        phone: '+91 9876543210'
-      },
-      paymentMethod: 'Credit Card',
-      paymentStatus: 'pending',
-      timeline: [
-        {
-          status: 'Order Placed',
-          timestamp: '2024-02-03T09:20:00Z',
-          description: 'Your order has been placed successfully'
-        }
-      ]
-    }
-  ]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  // Fetch orders from database
+  useEffect(() => {
+    const fetchOrders = async () => {
+      if (!isAuthenticated) {
+        setOrders([]);
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        setLoading(true);
+        const userOrders = await OrdersAPI.getOrders(user.id);
+        
+        // Transform database orders to component format
+        const transformedOrders = userOrders.map(dbOrder => {
+          return {
+            id: dbOrder.id,
+            orderNumber: dbOrder.order_number,
+            status: dbOrder.status as any,
+            items: dbOrder.order_items.map(item => ({
+              id: item.id,
+              name: item.product_name,
+              brand: item.product_brand,
+              price: item.price,
+              quantity: item.quantity,
+              image: item.product_image,
+              category: item.category
+            })),
+            totalAmount: dbOrder.total_amount,
+            orderDate: dbOrder.created_at,
+            estimatedDelivery: dbOrder.estimated_delivery,
+            actualDelivery: dbOrder.actual_delivery,
+            shippingAddress: dbOrder.shipping_address as any,
+            trackingNumber: dbOrder.tracking_number,
+            paymentMethod: dbOrder.payment_method,
+            paymentStatus: dbOrder.payment_status as any,
+            timeline: [
+              {
+                status: 'Order Placed',
+                timestamp: dbOrder.created_at,
+                description: 'Your order has been placed successfully'
+              }
+            ]
+          };
+        });
+        
+        setOrders(transformedOrders);
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        toast.error('Failed to load orders');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchOrders();
+  }, [isAuthenticated, user?.id]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -377,27 +275,32 @@ export function OrdersScreen({ open, onClose }: OrdersScreenProps) {
               </div>
 
               {/* Orders List */}
-              <ScrollArea className="h-[500px]">
-                <AnimatePresence>
-                  {filteredOrders.length === 0 ? (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="text-center py-12"
-                    >
-                      <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold mb-2">No orders found</h3>
-                      <p className="text-muted-foreground mb-4">
-                        {searchQuery || statusFilter !== 'all' 
-                          ? 'Try adjusting your search or filters'
-                          : 'You haven\'t placed any orders yet'
-                        }
-                      </p>
-                      <Button onClick={onClose}>Start Shopping</Button>
-                    </motion.div>
-                  ) : (
-                    <div className="space-y-4">
-                      {filteredOrders.map((order, index) => (
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <ScrollArea className="h-[500px]">
+                  <AnimatePresence>
+                    {filteredOrders.length === 0 ? (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-center py-12"
+                      >
+                        <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold mb-2">No orders found</h3>
+                        <p className="text-muted-foreground mb-4">
+                          {searchQuery || statusFilter !== 'all' 
+                            ? 'Try adjusting your search or filters'
+                            : 'You haven\'t placed any orders yet'
+                          }
+                        </p>
+                        <Button onClick={onClose}>Start Shopping</Button>
+                      </motion.div>
+                    ) : (
+                      <div className="space-y-4">
+                        {filteredOrders.map((order, index) => (
                         <motion.div
                           key={order.id}
                           initial={{ opacity: 0, y: 20 }}

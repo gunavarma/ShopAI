@@ -34,6 +34,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { PriceAlertModal } from './price-alert-modal';
 import { useAuth } from '@/contexts/auth-context';
+import { WishlistAPI, PriceAlertsAPI } from '@/lib/database';
 import { ProtectedRoute } from '../auth/protected-route';
 
 interface WishlistItem {
@@ -61,71 +62,8 @@ interface WishlistScreenProps {
 
 export function WishlistScreen({ open, onClose }: WishlistScreenProps) {
   const { isAuthenticated } = useAuth();
-  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([
-    {
-      id: '1',
-      name: 'Apple iPhone 15 Pro Max 256GB',
-      brand: 'Apple',
-      currentPrice: 134900,
-      originalPrice: 139900,
-      targetPrice: 125000,
-      image: 'https://images.pexels.com/photos/699122/pexels-photo-699122.jpeg?auto=compress&cs=tinysrgb&w=400',
-      rating: 4.8,
-      category: 'smartphone',
-      inStock: true,
-      priceHistory: [
-        { date: '2024-01-01', price: 139900 },
-        { date: '2024-01-15', price: 137900 },
-        { date: '2024-02-01', price: 134900 }
-      ],
-      alertEnabled: true,
-      lastPriceChange: 'down',
-      priceChangePercent: -3.6,
-      addedDate: '2024-01-01'
-    },
-    {
-      id: '2',
-      name: 'Samsung Galaxy S24 Ultra 512GB',
-      brand: 'Samsung',
-      currentPrice: 129999,
-      originalPrice: 134999,
-      targetPrice: 120000,
-      image: 'https://images.pexels.com/photos/1092644/pexels-photo-1092644.jpeg?auto=compress&cs=tinysrgb&w=400',
-      rating: 4.7,
-      category: 'smartphone',
-      inStock: true,
-      priceHistory: [
-        { date: '2024-01-01', price: 134999 },
-        { date: '2024-01-20', price: 132999 },
-        { date: '2024-02-01', price: 129999 }
-      ],
-      alertEnabled: true,
-      lastPriceChange: 'down',
-      priceChangePercent: -3.7,
-      addedDate: '2024-01-05'
-    },
-    {
-      id: '3',
-      name: 'MacBook Pro 14" M3 Pro 512GB',
-      brand: 'Apple',
-      currentPrice: 199900,
-      originalPrice: 199900,
-      targetPrice: 180000,
-      image: 'https://images.pexels.com/photos/205421/pexels-photo-205421.jpeg?auto=compress&cs=tinysrgb&w=400',
-      rating: 4.9,
-      category: 'laptop',
-      inStock: false,
-      priceHistory: [
-        { date: '2024-01-01', price: 199900 },
-        { date: '2024-01-15', price: 199900 },
-        { date: '2024-02-01', price: 199900 }
-      ],
-      alertEnabled: false,
-      lastPriceChange: 'same',
-      priceChangePercent: 0,
-      addedDate: '2024-01-10'
-    }
-  ]);
+  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('added');
@@ -142,6 +80,55 @@ export function WishlistScreen({ open, onClose }: WishlistScreenProps) {
     dailyDigest: false,
     weeklyReport: true
   });
+
+  // Fetch wishlist items from database
+  useEffect(() => {
+    const fetchWishlist = async () => {
+      if (!isAuthenticated || !user) {
+        setWishlistItems([]);
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        setLoading(true);
+        const items = await WishlistAPI.getWishlist(user.id);
+        
+        // Transform database items to component format
+        const transformedItems = items.map(item => ({
+          id: item.id,
+          name: item.product_name,
+          brand: item.product_brand,
+          currentPrice: item.current_price,
+          originalPrice: item.original_price || item.current_price,
+          targetPrice: item.target_price,
+          image: item.product_image,
+          rating: item.rating,
+          category: item.category,
+          inStock: item.in_stock,
+          priceHistory: [
+            { date: item.created_at, price: item.original_price || item.current_price },
+            { date: item.updated_at, price: item.current_price }
+          ],
+          alertEnabled: item.alert_enabled,
+          lastPriceChange: item.current_price < (item.original_price || item.current_price) ? 'down' : 
+                          item.current_price > (item.original_price || item.current_price) ? 'up' : 'same',
+          priceChangePercent: item.original_price ? 
+            ((item.current_price - item.original_price) / item.original_price) * 100 : 0,
+          addedDate: item.created_at
+        }));
+        
+        setWishlistItems(transformedItems);
+      } catch (error) {
+        console.error('Error fetching wishlist:', error);
+        toast.error('Failed to load wishlist');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchWishlist();
+  }, [isAuthenticated, user]);
 
   const filteredItems = wishlistItems
     .filter(item => {
@@ -165,34 +152,55 @@ export function WishlistScreen({ open, onClose }: WishlistScreenProps) {
     });
 
   const toggleAlert = (id: string) => {
-    setWishlistItems(items =>
-      items.map(item =>
-        item.id === id ? { ...item, alertEnabled: !item.alertEnabled } : item
-      )
-    );
-    
     const item = wishlistItems.find(item => item.id === id);
-    if (item) {
-      toast.success(
-        item.alertEnabled ? 'Price alert disabled' : 'Price alert enabled',
-        {
-          description: item.alertEnabled 
-            ? 'You will no longer receive notifications for this item'
-            : 'You will be notified when the price drops'
-        }
-      );
-    }
+    
+    if (!item || !isAuthenticated || !user) return;
+    
+    const newAlertState = !item.alertEnabled;
+    
+    // Update in database
+    WishlistAPI.toggleAlert(user.id, id, newAlertState)
+      .then(() => {
+        setWishlistItems(items => 
+          items.map(item => 
+            item.id === id ? { ...item, alertEnabled: newAlertState } : item
+          )
+        );
+        
+        toast.success(
+          newAlertState ? 'Price alert enabled' : 'Price alert disabled',
+          {
+            description: newAlertState
+              ? 'You will be notified when the price drops'
+              : 'You will no longer receive notifications for this item'
+          }
+        );
+      })
+      .catch(error => {
+        console.error('Error toggling alert:', error);
+        toast.error('Failed to update alert settings');
+      });
   };
 
   const removeFromWishlist = (id: string) => {
     const item = wishlistItems.find(item => item.id === id);
-    setWishlistItems(items => items.filter(item => item.id !== id));
     
-    if (item) {
-      toast.success('Removed from wishlist', {
-        description: `${item.name} has been removed from your wishlist`
-      });
+    if (!item || !isAuthenticated || !user) {
+      setWishlistItems(items => items.filter(item => item.id !== id));
+      toast.success('Item removed from wishlist');
+      return;
     }
+    
+    // Remove from database
+    WishlistAPI.removeFromWishlist(user.id, id)
+      .then(() => {
+        setWishlistItems(items => items.filter(item => item.id !== id));
+        toast.success(`${item.name} removed from wishlist`);
+      })
+      .catch(error => {
+        console.error('Error removing from wishlist:', error);
+        toast.error('Failed to remove item');
+      });
   };
 
   const addToCart = (id: string) => {
@@ -205,28 +213,67 @@ export function WishlistScreen({ open, onClose }: WishlistScreenProps) {
   };
 
   const setPriceAlert = (item: WishlistItem) => {
-    setSelectedItem(item);
-    setShowPriceAlertModal(true);
+    if (!isAuthenticated) {
+      toast.error('Please sign in to set price alerts');
+      return;
+    }
+    
+    if (item) {
+      setSelectedItem(item);
+      setShowPriceAlertModal(true);
+    }
   };
 
   const handlePriceAlertSave = (targetPrice: number, alertType: string) => {
-    if (selectedItem) {
-      setWishlistItems(items =>
-        items.map(item =>
-          item.id === selectedItem.id 
-            ? { ...item, targetPrice, alertEnabled: true }
-            : item
-        )
-      );
-      
-      toast.success('Price alert set!', {
-        description: `You'll be notified when ${selectedItem.name} ${alertType} ₹${targetPrice.toLocaleString()}`
-      });
+    if (!selectedItem || !isAuthenticated || !user) {
+      setShowPriceAlertModal(false);
+      setSelectedItem(null);
+      return;
     }
-    setShowPriceAlertModal(false);
-    setSelectedItem(null);
+    
+    // Create price alert in database
+    const alertData = {
+      user_id: user.id,
+      wishlist_item_id: selectedItem.id,
+      target_price: targetPrice,
+      alert_type: alertType === 'drops below' ? 'drops_below' : 'percentage_discount',
+      percentage: alertType === 'percentage' ? 10 : undefined,
+      is_active: true,
+      last_checked: new Date().toISOString()
+    };
+    
+    PriceAlertsAPI.createPriceAlert(alertData)
+      .then(() => {
+        // Update wishlist item
+        return WishlistAPI.updateWishlistItem(user.id, selectedItem.id, {
+          target_price: targetPrice,
+          alert_enabled: true
+        });
+      })
+      .then(() => {
+        // Update local state
+        setWishlistItems(items =>
+          items.map(item =>
+            item.id === selectedItem.id 
+              ? { ...item, targetPrice, alertEnabled: true }
+              : item
+          )
+        );
+        
+        toast.success('Price alert set!', {
+          description: `You'll be notified when ${selectedItem.name} ${alertType} ₹${targetPrice.toLocaleString()}`
+        });
+      })
+      .catch(error => {
+        console.error('Error setting price alert:', error);
+        toast.error('Failed to set price alert');
+      })
+      .finally(() => {
+        setShowPriceAlertModal(false);
+        setSelectedItem(null);
+      });
   };
-
+      
   const categories = ['all', 'smartphone', 'laptop', 'headphones', 'smartwatch', 'tablet'];
   const activeAlerts = wishlistItems.filter(item => item.alertEnabled).length;
   const totalSavings = wishlistItems.reduce((sum, item) => 
@@ -350,29 +397,34 @@ export function WishlistScreen({ open, onClose }: WishlistScreenProps) {
                   </div>
 
                   {/* Wishlist Items */}
-                  <ScrollArea className="h-[400px]">
-                    <AnimatePresence>
-                      {filteredItems.length === 0 ? (
-                        <motion.div
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="text-center py-12"
-                        >
-                          <Heart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                          <h3 className="text-lg font-semibold mb-2">
-                            {searchQuery || filterCategory !== 'all' ? 'No items found' : 'Your wishlist is empty'}
-                          </h3>
-                          <p className="text-muted-foreground mb-4">
-                            {searchQuery || filterCategory !== 'all' 
-                              ? 'Try adjusting your search or filters'
-                              : 'Start adding items to your wishlist to track prices'
-                            }
-                          </p>
-                          <Button onClick={onClose}>Start Shopping</Button>
-                        </motion.div>
-                      ) : (
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                          {filteredItems.map((item, index) => (
+                  {loading ? (
+                    <div className="flex items-center justify-center h-[400px]">
+                      <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : (
+                    <ScrollArea className="h-[400px]">
+                      <AnimatePresence>
+                        {filteredItems.length === 0 ? (
+                          <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-center py-12"
+                          >
+                            <Heart className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                            <h3 className="text-lg font-semibold mb-2">
+                              {searchQuery || filterCategory !== 'all' ? 'No items found' : 'Your wishlist is empty'}
+                            </h3>
+                            <p className="text-muted-foreground mb-4">
+                              {searchQuery || filterCategory !== 'all' 
+                                ? 'Try adjusting your search or filters'
+                                : 'Start adding items to your wishlist to track prices'
+                              }
+                            </p>
+                            <Button onClick={onClose}>Start Shopping</Button>
+                          </motion.div>
+                        ) : (
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            {filteredItems.map((item, index) => (
                             <motion.div
                               key={item.id}
                               initial={{ opacity: 0, y: 20 }}

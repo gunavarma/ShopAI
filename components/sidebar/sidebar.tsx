@@ -40,15 +40,9 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/contexts/auth-context';
 import { AuthModal } from '../auth/auth-modal';
+import { useRealtimeChat } from '@/lib/hooks/use-realtime-chat';
 import { ProfileDropdown } from '../auth/profile-dropdown';
-
-interface ChatHistory {
-  id: string;
-  title: string;
-  timestamp: number;
-  messageCount: number;
-  lastMessage: string;
-}
+import { ChatHistory } from '@/lib/database/types';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -61,6 +55,8 @@ interface SidebarProps {
   onBooksClick: () => void;
   onOrdersClick: () => void;
   currentChatId?: string;
+  chats?: ChatHistory[];
+  loading?: boolean;
 }
 
 export function Sidebar({ 
@@ -73,67 +69,37 @@ export function Sidebar({
   onWishlistClick,
   onBooksClick,
   onOrdersClick,
-  currentChatId 
+  currentChatId,
+  chats: externalChats,
+  loading: externalLoading = false
 }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const { theme, setTheme } = useTheme();
   const { isAuthenticated, user } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const { chats: dbChats, loading: dbLoading } = useRealtimeChat();
 
-  // Mock chat history data with number timestamps
-  const [chatHistory] = useState<ChatHistory[]>([
-    {
-      id: '1',
-      title: 'Apple Watch Series 9',
-      timestamp: Date.now() - 1000 * 60 * 30, // 30 minutes ago
-      messageCount: 8,
-      lastMessage: 'Found 6 Apple Watch models with health tracking features...'
-    },
-    {
-      id: '2',
-      title: 'Gaming Laptops Under ₹80k',
-      timestamp: Date.now() - 1000 * 60 * 60 * 2, // 2 hours ago
-      messageCount: 12,
-      lastMessage: 'Here are the best gaming laptops in your budget...'
-    },
-    {
-      id: '3',
-      title: 'Nike Running Shoes',
-      timestamp: Date.now() - 1000 * 60 * 60 * 24, // 1 day ago
-      messageCount: 6,
-      lastMessage: 'I found some excellent Nike running shoes for you...'
-    },
-    {
-      id: '4',
-      title: 'iPhone 15 vs Samsung Galaxy S24',
-      timestamp: Date.now() - 1000 * 60 * 60 * 24 * 2, // 2 days ago
-      messageCount: 15,
-      lastMessage: 'Both phones offer excellent features, but here\'s the comparison...'
-    },
-    {
-      id: '5',
-      title: 'Kitchen Appliances',
-      timestamp: Date.now() - 1000 * 60 * 60 * 24 * 3, // 3 days ago
-      messageCount: 9,
-      lastMessage: 'Found great deals on kitchen appliances from top brands...'
-    }
-  ]);
+  // Use external chats if provided, otherwise use database chats
+  const chatHistory = externalChats || dbChats || [];
+  const isLoading = externalLoading || dbLoading;
 
   const filteredHistory = chatHistory.filter(chat =>
-    chat.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    chat.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
+    chat.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    chat.last_message?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const formatTimestamp = (timestamp: number) => {
-    const now = Date.now();
-    const diff = now - timestamp;
+  const formatTimestamp = (timestamp: string) => {
+    const now = new Date();
+    const date = new Date(timestamp);
+    const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / (1000 * 60));
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
     if (minutes < 60) return `${minutes}m ago`;
     if (hours < 24) return `${hours}h ago`;
-    return `${days}d ago`;
+    if (days < 7) return `${days}d ago`;
+    return date.toLocaleDateString();
   };
 
   const getThemeIcon = () => {
@@ -276,78 +242,91 @@ export function Sidebar({
                   <History className="w-4 h-4 text-muted-foreground" />
                   <span className="text-sm font-medium text-muted-foreground">Recent Chats</span>
                   <Badge variant="secondary" className="text-xs">
-                    {filteredHistory.length}
+                    {isLoading ? '...' : filteredHistory.length}
                   </Badge>
                 </div>
               </div>
 
               <ScrollArea className="flex-1 px-4">
-                <div className="space-y-2">
-                  {filteredHistory.map((chat) => (
-                    <motion.div
-                      key={chat.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className={`group relative p-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-muted/50 ${
-                        currentChatId === chat.id ? 'bg-primary/10 border border-primary/30' : 'hover:bg-muted/30'
-                      }`}
-                      onClick={() => onChatSelect(chat.id)}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <MessageSquare className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-                            <h4 className="text-sm font-medium truncate">{chat.title}</h4>
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {filteredHistory.map((chat) => (
+                      <motion.div
+                        key={chat.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className={`group relative p-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-muted/50 ${
+                          currentChatId === chat.id ? 'bg-primary/10 border border-primary/30' : 'hover:bg-muted/30'
+                        }`}
+                        onClick={() => onChatSelect(chat.id)}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <MessageSquare className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                              <h4 className="text-sm font-medium truncate">{chat.title}</h4>
+                            </div>
+                            {chat.last_message && (
+                              <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
+                                {chat.last_message}
+                              </p>
+                            )}
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-muted-foreground">
+                                {formatTimestamp(chat.updated_at)}
+                              </span>
+                              <Badge variant="outline" className="text-xs">
+                                {chat.message_count}
+                              </Badge>
+                            </div>
                           </div>
-                          <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
-                            {chat.lastMessage}
-                          </p>
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs text-muted-foreground">
-                              {formatTimestamp(chat.timestamp)}
-                            </span>
-                            <Badge variant="outline" className="text-xs">
-                              {chat.messageCount}
-                            </Badge>
-                          </div>
+
+                          {/* Chat Actions */}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0"
+                              >
+                                <MoreVertical className="w-3 h-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-40">
+                              <DropdownMenuItem>
+                                <Edit3 className="w-3 h-3 mr-2" />
+                                Rename
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-destructive">
+                                <Trash2 className="w-3 h-3 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
+                      </motion.div>
+                    ))}
 
-                        {/* Chat Actions */}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0"
-                            >
-                              <MoreVertical className="w-3 h-3" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuItem>
-                              <Edit3 className="w-3 h-3 mr-2" />
-                              Rename
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive">
-                              <Trash2 className="w-3 h-3 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                    {filteredHistory.length === 0 && !isLoading && (
+                      <div className="text-center py-8">
+                        <MessageSquare className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                        <p className="text-sm text-muted-foreground">
+                          {searchQuery ? 'No chats found' : 'No chat history yet'}
+                        </p>
+                        {!searchQuery && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Start a conversation to see your chat history
+                          </p>
+                        )}
                       </div>
-                    </motion.div>
-                  ))}
-
-                  {filteredHistory.length === 0 && (
-                    <div className="text-center py-8">
-                      <MessageSquare className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                      <p className="text-sm text-muted-foreground">
-                        {searchQuery ? 'No chats found' : 'No chat history yet'}
-                      </p>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                )}
               </ScrollArea>
             </div>
 
