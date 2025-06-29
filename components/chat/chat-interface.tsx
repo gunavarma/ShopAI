@@ -352,7 +352,7 @@ export function ChatInterface() {
   return (
     <div className="flex h-screen relative">
       {/* Sidebar */}
-      <Sidebar
+     <Sidebar
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen(!sidebarOpen)}
         onNewChat={handleNewChat}
