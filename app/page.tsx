@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from 'framer-motion';
-import { ChatInterface } from '@/components/chat/chat-interface';
+import { ChatInterfaceEnhanced } from '@/components/chat/chat-interface-enhanced';
 import { ClientOnly } from '@/components/client-only';
 
 export default function Home() {
@@ -22,7 +22,7 @@ export default function Home() {
           transition={{ duration: 0.5 }}
           className="h-screen"
         >
-          <ChatInterface />
+          <ChatInterfaceEnhanced />
         </motion.main>
       </ClientOnly>
     </div>

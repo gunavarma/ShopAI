@@ -104,7 +104,6 @@ export class ChatHistoryAPI {
         messages: updatedMessages,
         last_message: message.content,
         message_count: updatedMessages.length,
-        updated_at: new Date().toISOString()
       };
 
       const { data, error } = await supabase
