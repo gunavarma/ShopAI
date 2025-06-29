@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, 
@@ -15,7 +15,8 @@ import {
   RotateCcw,
   CreditCard,
   Tag,
-  Gift
+  Gift,
+  Loader2
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -26,7 +27,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth-context';
 import { ProtectedRoute } from '../auth/protected-route';
-import { Loader2 } from 'lucide-react';
 import { CartAPI } from '@/lib/database';
 
 interface CartItem {
@@ -48,7 +48,7 @@ interface CartScreenProps {
 }
 
 export function CartScreen({ open, onClose }: CartScreenProps) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -220,113 +220,114 @@ export function CartScreen({ open, onClose }: CartScreenProps) {
                     ) : (
                       <div className="space-y-4">
                         {cartItems.map((item, index) => (
-                        <motion.div
-                          key={item.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, x: -100 }}
-                          transition={{ delay: index * 0.1 }}
-                          className={`glass-card rounded-lg p-4 ${!item.inStock ? 'opacity-60' : ''}`}
-                        >
-                          <div className="flex gap-4">
-                            {/* Product Image */}
-                            <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                              <img
-                                src={item.image}
-                                alt={item.name}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
+                          <motion.div
+                            key={item.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, x: -100 }}
+                            transition={{ delay: index * 0.1 }}
+                            className={`glass-card rounded-lg p-4 ${!item.inStock ? 'opacity-60' : ''}`}
+                          >
+                            <div className="flex gap-4">
+                              {/* Product Image */}
+                              <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                                <img
+                                  src={item.image}
+                                  alt={item.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
 
-                            {/* Product Details */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-start justify-between">
-                                <div className="flex-1 min-w-0">
-                                  <h4 className="font-medium text-sm truncate">{item.name}</h4>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <Badge variant="secondary" className="text-xs">
-                                      {item.brand}
-                                    </Badge>
-                                    <div className="flex items-center gap-1">
-                                      <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                      <span className="text-xs text-muted-foreground">{item.rating}</span>
+                              {/* Product Details */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between">
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-medium text-sm truncate">{item.name}</h4>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <Badge variant="secondary" className="text-xs">
+                                        {item.brand}
+                                      </Badge>
+                                      <div className="flex items-center gap-1">
+                                        <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                        <span className="text-xs text-muted-foreground">{item.rating}</span>
+                                      </div>
                                     </div>
+                                    
+                                    {!item.inStock && (
+                                      <Badge variant="destructive" className="text-xs mt-1">
+                                        Out of Stock
+                                      </Badge>
+                                    )}
                                   </div>
-                                  
-                                  {!item.inStock && (
-                                    <Badge variant="destructive" className="text-xs mt-1">
-                                      Out of Stock
-                                    </Badge>
-                                  )}
+
+                                  {/* Actions */}
+                                  <div className="flex items-center gap-1 ml-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => moveToWishlist(item.id)}
+                                      className="h-8 w-8 p-0"
+                                    >
+                                      <Heart className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => removeItem(item.id)}
+                                      className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
                                 </div>
 
-                                {/* Actions */}
-                                <div className="flex items-center gap-1 ml-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => moveToWishlist(item.id)}
-                                    className="h-8 w-8 p-0"
-                                  >
-                                    <Heart className="w-4 h-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => removeItem(item.id)}
-                                    className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </div>
-                              </div>
-
-                              {/* Price and Quantity */}
-                              <div className="flex items-center justify-between mt-3">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-semibold">
-                                    ₹{item.price.toLocaleString()}
-                                  </span>
-                                  {item.originalPrice && (
-                                    <span className="text-sm text-muted-foreground line-through">
-                                      ₹{item.originalPrice.toLocaleString()}
+                                {/* Price and Quantity */}
+                                <div className="flex items-center justify-between mt-3">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-semibold">
+                                      ₹{item.price.toLocaleString()}
                                     </span>
-                                  )}
-                                </div>
+                                    {item.originalPrice && (
+                                      <span className="text-sm text-muted-foreground line-through">
+                                        ₹{item.originalPrice.toLocaleString()}
+                                      </span>
+                                    )}
+                                  </div>
 
-                                {/* Quantity Controls */}
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                    disabled={item.quantity <= 1 || !item.inStock}
-                                    className="h-8 w-8 p-0"
-                                  >
-                                    <Minus className="w-3 h-3" />
-                                  </Button>
-                                  <span className="w-8 text-center text-sm font-medium">
-                                    {item.quantity}
-                                  </span>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                    disabled={!item.inStock}
-                                    className="h-8 w-8 p-0"
-                                  >
-                                    <Plus className="w-3 h-3" />
-                                  </Button>
+                                  {/* Quantity Controls */}
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                                      disabled={item.quantity <= 1 || !item.inStock}
+                                      className="h-8 w-8 p-0"
+                                    >
+                                      <Minus className="w-3 h-3" />
+                                    </Button>
+                                    <span className="w-8 text-center text-sm font-medium">
+                                      {item.quantity}
+                                    </span>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                                      disabled={!item.inStock}
+                                      className="h-8 w-8 p-0"
+                                    >
+                                      <Plus className="w-3 h-3" />
+                                    </Button>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  )}
-                </AnimatePresence>
-              </ScrollArea>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+                  </AnimatePresence>
+                </ScrollArea>
+              )}
             </div>
 
             {/* Order Summary - Right Side */}
