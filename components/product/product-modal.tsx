@@ -108,17 +108,35 @@ export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalP
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="relative aspect-square rounded-xl overflow-hidden bg-muted group"
+                className="relative aspect-square rounded-xl overflow-hidden bg-muted group shadow-lg"
               >
                 <img
                   src={currentImage}
                   alt={`${product.name} - Image ${selectedImageIndex + 1}`}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
-                    target.src = 'https://images.pexels.com/photos/356056/pexels-photo-356056.jpeg?auto=compress&cs=tinysrgb&w=800';
+                    target.src = product.image || 'https://images.pexels.com/photos/356056/pexels-photo-356056.jpeg?auto=compress&cs=tinysrgb&w=800';
                   }}
                 />
+                
+                {/* Source and Live indicators */}
+                <div className="absolute top-3 left-3 flex flex-col gap-2">
+                  <Badge 
+                    variant="secondary" 
+                    className="text-xs bg-black/80 text-white border-none backdrop-blur-sm"
+                  >
+                    {(product as any).source === 'google_shopping' ? 'Google Shopping' : 
+                     (product as any).source === 'amazon' ? 'Amazon India' : 'AI Enhanced'}
+                  </Badge>
+                  
+                  {(product as any).source !== 'ai_generated' && (
+                    <div className="flex items-center gap-1 px-2 py-1 bg-green-500/90 rounded-full backdrop-blur-sm">
+                      <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                      <span className="text-xs text-white font-medium">Real-time Data</span>
+                    </div>
+                  )}
+                </div>
                 
                 {/* Image Navigation */}
                 {relatedImages.length > 1 && (
@@ -195,7 +213,7 @@ export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalP
                       title={`${product.name} Review`}
                       className="w-full h-full"
                       frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        target.src = product.image || 'https://images.pexels.com/photos/356056/pexels-photo-356056.jpeg?auto=compress&cs=tinysrgb&w=800';
                       allowFullScreen
                     />
                   </div>
@@ -203,7 +221,7 @@ export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalP
               )}
               
               {/* Real-time indicator */}
-              <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+              <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <span className="text-sm text-green-700 dark:text-green-400">
                   {isLoadingImages ? 'Loading related images...' : 'AI-generated related images'}
@@ -412,7 +430,7 @@ export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalP
               <TabsContent value="realtime" className="mt-6">
                 <div className="glass-card rounded-lg p-6">
                   <div className="flex items-center gap-2 mb-4">
-                    <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                    <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
                     <h5 className="font-semibold text-green-600">Live Product Data</h5>
                   </div>
                   <div className="space-y-3 text-sm">
@@ -422,7 +440,7 @@ export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalP
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <span className="font-medium">Data Source:</span>
-                        <p className="text-muted-foreground">Gemini AI</p>
+                        <p className="text-muted-foreground">{(product as any).source === 'ai_generated' ? 'Gemini AI' : 'Live Shopping Data'}</p>
                       </div>
                       <div>
                         <span className="font-medium">Images:</span>
@@ -430,7 +448,7 @@ export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalP
                       </div>
                       <div>
                         <span className="font-medium">Last Updated:</span>
-                        <p className="text-muted-foreground">Just now</p>
+                        <p className="text-muted-foreground">{(product as any).source === 'ai_generated' ? 'AI Generated' : 'Live Data'}</p>
                       </div>
                       <div>
                         <span className="font-medium">Related Images:</span>

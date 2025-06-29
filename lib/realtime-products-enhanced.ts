@@ -180,7 +180,7 @@ Return only valid JSON:
           name: scraped.title,
           price: scraped.price,
           originalPrice: scraped.originalPrice,
-          image: scraped.image || this.getProductImage(enhancement.category || 'product'),
+          image: scraped.image && scraped.image !== '' ? scraped.image : this.getProductImage(enhancement.category || 'product', scraped.title),
           rating: scraped.rating,
           reviewCount: scraped.reviewCount,
           brand: scraped.brand || 'Unknown',

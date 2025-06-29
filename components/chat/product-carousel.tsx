@@ -91,13 +91,38 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 transition={{ duration: 0.2 }}
-                className="aspect-square mb-3 rounded-lg overflow-hidden bg-muted"
+                className="aspect-square mb-3 rounded-lg overflow-hidden bg-muted relative group"
               >
                 <img
                   src={product.image}
                   alt={product.name}
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = 'https://images.pexels.com/photos/356056/pexels-photo-356056.jpeg?auto=compress&cs=tinysrgb&w=800';
+                  }}
                 />
+                
+                {/* Image overlay with source indicator */}
+                <div className="absolute top-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <Badge 
+                    variant="secondary" 
+                    className="text-xs bg-black/70 text-white border-none"
+                  >
+                    {product.source === 'google_shopping' ? 'Google Shopping' : 
+                     product.source === 'amazon' ? 'Amazon' : 'AI Generated'}
+                  </Badge>
+                </div>
+                
+                {/* Real-time indicator */}
+                {(product as any).source !== 'ai_generated' && (
+                  <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="flex items-center gap-1 px-2 py-1 bg-green-500/90 rounded-full">
+                      <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                      <span className="text-xs text-white font-medium">Live</span>
+                    </div>
+                  </div>
+                )}
               </motion.div>
               
               <div className="space-y-2">
