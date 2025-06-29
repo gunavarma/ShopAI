@@ -50,7 +50,7 @@ export class EnhancedRealtimeProductService {
       // First, try to get real product data if API key is available
       if (useRealData && process.env.NEXT_PUBLIC_SCRAPER_API_KEY) {
         console.log('Fetching real product data for:', query);
-        scrapedProducts = await ScraperAPIService.searchMultipleSources(query, options);
+        scrapedProducts = await this.fetchFromAPI(query, options);
       }
 
       // If we have real data, enhance it with AI
@@ -67,6 +67,36 @@ export class EnhancedRealtimeProductService {
       console.error('Error in enhanced product search:', error);
       // Fallback to AI generation
       return await this.generateAIProducts(query, maxResults);
+    }
+  }
+
+  private static async fetchFromAPI(query: string, options: any): Promise<ScrapedProduct[]> {
+    try {
+      const response = await fetch('/api/scrape', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query,
+          options
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'API request failed');
+      }
+
+      return data.products || [];
+    } catch (error) {
+      console.error('Error fetching from API:', error);
+      return [];
     }
   }
 
