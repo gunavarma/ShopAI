@@ -32,6 +32,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/auth-context';
+import { ProtectedRoute } from '../auth/protected-route';
 
 interface OrderItem {
   id: string;
@@ -76,6 +78,7 @@ interface OrdersScreenProps {
 }
 
 export function OrdersScreen({ open, onClose }: OrdersScreenProps) {
+  const { isAuthenticated } = useAuth();
   const [orders] = useState<Order[]>([
     {
       id: '1',
@@ -331,217 +334,219 @@ export function OrdersScreen({ open, onClose }: OrdersScreenProps) {
     <>
       <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className="max-w-6xl max-h-[90vh] p-0 overflow-hidden bg-background border-border/50">
-          <DialogHeader className="flex items-center justify-between p-6 border-b border-border/50">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
-                <Package className="w-5 h-5 text-blue-500" />
+          <ProtectedRoute>
+            <DialogHeader className="flex items-center justify-between p-6 border-b border-border/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+                  <Package className="w-5 h-5 text-blue-500" />
+                </div>
+                <div>
+                  <DialogTitle className="text-xl font-semibold">My Orders</DialogTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Track and manage your orders
+                  </p>
+                </div>
               </div>
-              <div>
-                <DialogTitle className="text-xl font-semibold">My Orders</DialogTitle>
-                <p className="text-sm text-muted-foreground">
-                  Track and manage your orders
-                </p>
+            </DialogHeader>
+
+            <div className="p-6 space-y-6">
+              {/* Search and Filters */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search orders..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statuses.map(status => (
+                      <SelectItem key={status} value={status}>
+                        {status === 'all' ? 'All Orders' : status.charAt(0).toUpperCase() + status.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-          </DialogHeader>
 
-          <div className="p-6 space-y-6">
-            {/* Search and Filters */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search orders..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {statuses.map(status => (
-                    <SelectItem key={status} value={status}>
-                      {status === 'all' ? 'All Orders' : status.charAt(0).toUpperCase() + status.slice(1)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Orders List */}
-            <ScrollArea className="h-[500px]">
-              <AnimatePresence>
-                {filteredOrders.length === 0 ? (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-center py-12"
-                  >
-                    <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No orders found</h3>
-                    <p className="text-muted-foreground mb-4">
-                      {searchQuery || statusFilter !== 'all' 
-                        ? 'Try adjusting your search or filters'
-                        : 'You haven\'t placed any orders yet'
-                      }
-                    </p>
-                    <Button onClick={onClose}>Start Shopping</Button>
-                  </motion.div>
-                ) : (
-                  <div className="space-y-4">
-                    {filteredOrders.map((order, index) => (
-                      <motion.div
-                        key={order.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="glass-card rounded-lg p-6 hover:neon-glow transition-all duration-300"
-                      >
-                        {/* Order Header */}
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold">#{order.orderNumber}</span>
-                              <Badge className={getStatusColor(order.status)}>
-                                {getStatusIcon(order.status)}
-                                <span className="ml-1 capitalize">{order.status}</span>
-                              </Badge>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-semibold">₹{order.totalAmount.toLocaleString()}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {formatDate(order.orderDate)}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Progress Bar */}
-                        <div className="mb-4">
-                          <div className="flex justify-between text-sm text-muted-foreground mb-2">
-                            <span>Order Progress</span>
-                            <span>{getProgressValue(order.status)}%</span>
-                          </div>
-                          <Progress value={getProgressValue(order.status)} className="h-2" />
-                        </div>
-
-                        {/* Order Items */}
-                        <div className="space-y-3 mb-4">
-                          {order.items.map((item, itemIndex) => (
-                            <div key={item.id} className="flex items-center gap-3">
-                              <img
-                                src={item.image}
-                                alt={item.name}
-                                className="w-12 h-12 rounded-lg object-cover"
-                              />
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-medium text-sm truncate">{item.name}</h4>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                  <span>{item.brand}</span>
-                                  <span>•</span>
-                                  <span>Qty: {item.quantity}</span>
-                                  <span>•</span>
-                                  <span>₹{item.price.toLocaleString()}</span>
-                                </div>
+              {/* Orders List */}
+              <ScrollArea className="h-[500px]">
+                <AnimatePresence>
+                  {filteredOrders.length === 0 ? (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-center py-12"
+                    >
+                      <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold mb-2">No orders found</h3>
+                      <p className="text-muted-foreground mb-4">
+                        {searchQuery || statusFilter !== 'all' 
+                          ? 'Try adjusting your search or filters'
+                          : 'You haven\'t placed any orders yet'
+                        }
+                      </p>
+                      <Button onClick={onClose}>Start Shopping</Button>
+                    </motion.div>
+                  ) : (
+                    <div className="space-y-4">
+                      {filteredOrders.map((order, index) => (
+                        <motion.div
+                          key={order.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                          className="glass-card rounded-lg p-6 hover:neon-glow transition-all duration-300"
+                        >
+                          {/* Order Header */}
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold">#{order.orderNumber}</span>
+                                <Badge className={getStatusColor(order.status)}>
+                                  {getStatusIcon(order.status)}
+                                  <span className="ml-1 capitalize">{order.status}</span>
+                                </Badge>
                               </div>
                             </div>
-                          ))}
-                        </div>
+                            <div className="text-right">
+                              <p className="font-semibold">₹{order.totalAmount.toLocaleString()}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {formatDate(order.orderDate)}
+                              </p>
+                            </div>
+                          </div>
 
-                        {/* Delivery Info */}
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-                          <MapPin className="w-4 h-4" />
-                          <span>
-                            Deliver to: {order.shippingAddress.city}, {order.shippingAddress.pincode}
-                          </span>
-                          {order.estimatedDelivery && (
-                            <>
-                              <span>•</span>
-                              <Calendar className="w-4 h-4" />
-                              <span>
-                                Expected: {formatDate(order.estimatedDelivery)}
-                              </span>
-                            </>
-                          )}
-                        </div>
+                          {/* Progress Bar */}
+                          <div className="mb-4">
+                            <div className="flex justify-between text-sm text-muted-foreground mb-2">
+                              <span>Order Progress</span>
+                              <span>{getProgressValue(order.status)}%</span>
+                            </div>
+                            <Progress value={getProgressValue(order.status)} className="h-2" />
+                          </div>
 
-                        {/* Actions */}
-                        <div className="flex flex-wrap gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => trackOrder(order)}
-                          >
-                            <Eye className="w-4 h-4 mr-1" />
-                            Track Order
-                          </Button>
-                          
-                          {order.status === 'delivered' && (
-                            <>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => downloadInvoice(order.id)}
-                              >
-                                <Download className="w-4 h-4 mr-1" />
-                                Invoice
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => returnOrder(order.id)}
-                              >
-                                <RotateCcw className="w-4 h-4 mr-1" />
-                                Return
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => reorderItems(order)}
-                              >
-                                <RefreshCw className="w-4 h-4 mr-1" />
-                                Reorder
-                              </Button>
-                            </>
-                          )}
-                          
-                          {(order.status === 'pending' || order.status === 'confirmed') && (
+                          {/* Order Items */}
+                          <div className="space-y-3 mb-4">
+                            {order.items.map((item, itemIndex) => (
+                              <div key={item.id} className="flex items-center gap-3">
+                                <img
+                                  src={item.image}
+                                  alt={item.name}
+                                  className="w-12 h-12 rounded-lg object-cover"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-medium text-sm truncate">{item.name}</h4>
+                                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                    <span>{item.brand}</span>
+                                    <span>•</span>
+                                    <span>Qty: {item.quantity}</span>
+                                    <span>•</span>
+                                    <span>₹{item.price.toLocaleString()}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Delivery Info */}
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+                            <MapPin className="w-4 h-4" />
+                            <span>
+                              Deliver to: {order.shippingAddress.city}, {order.shippingAddress.pincode}
+                            </span>
+                            {order.estimatedDelivery && (
+                              <>
+                                <span>•</span>
+                                <Calendar className="w-4 h-4" />
+                                <span>
+                                  Expected: {formatDate(order.estimatedDelivery)}
+                                </span>
+                              </>
+                            )}
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex flex-wrap gap-2">
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => cancelOrder(order.id)}
-                              className="text-destructive hover:text-destructive"
+                              onClick={() => trackOrder(order)}
                             >
-                              <X className="w-4 h-4 mr-1" />
-                              Cancel
+                              <Eye className="w-4 h-4 mr-1" />
+                              Track Order
                             </Button>
-                          )}
-                          
-                          {order.trackingNumber && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                navigator.clipboard.writeText(order.trackingNumber!);
-                                toast.success('Tracking number copied');
-                              }}
-                            >
-                              <Package className="w-4 h-4 mr-1" />
-                              {order.trackingNumber}
-                            </Button>
-                          )}
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </AnimatePresence>
-            </ScrollArea>
-          </div>
+                            
+                            {order.status === 'delivered' && (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => downloadInvoice(order.id)}
+                                >
+                                  <Download className="w-4 h-4 mr-1" />
+                                  Invoice
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => returnOrder(order.id)}
+                                >
+                                  <RotateCcw className="w-4 h-4 mr-1" />
+                                  Return
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => reorderItems(order)}
+                                >
+                                  <RefreshCw className="w-4 h-4 mr-1" />
+                                  Reorder
+                                </Button>
+                              </>
+                            )}
+                            
+                            {(order.status === 'pending' || order.status === 'confirmed') && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => cancelOrder(order.id)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <X className="w-4 h-4 mr-1" />
+                                Cancel
+                              </Button>
+                            )}
+                            
+                            {order.trackingNumber && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(order.trackingNumber!);
+                                  toast.success('Tracking number copied');
+                                }}
+                              >
+                                <Package className="w-4 h-4 mr-1" />
+                                {order.trackingNumber}
+                              </Button>
+                            )}
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </AnimatePresence>
+              </ScrollArea>
+            </div>
+          </ProtectedRoute>
         </DialogContent>
       </Dialog>
 
