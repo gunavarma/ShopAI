@@ -170,6 +170,7 @@ export function Sidebar({
   }}
 >
 
+        <>
         {/* Collapsed State - Icons Only */}
         {!isOpen && (
           <motion.div
@@ -407,6 +408,7 @@ export function Sidebar({
             </div>
           </motion.div>
         )}
+        </>
       </motion.aside>
     </TooltipProvider>
   );
