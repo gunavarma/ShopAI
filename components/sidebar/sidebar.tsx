@@ -408,6 +408,7 @@ export function Sidebar({
           </motion.div>
         )}
       </motion.aside>
+      </motion.aside>
     </TooltipProvider>
   );
 }
