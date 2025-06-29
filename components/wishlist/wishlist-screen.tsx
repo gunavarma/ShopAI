@@ -143,6 +143,7 @@ export function WishlistScreen({ open, onClose }: WishlistScreenProps) {
       <PriceAlertModal
         open={showPriceAlertModal}
         onClose={() => setShowPriceAlertModal(false)}
+  )
   const handlePriceAlertSave = async (targetPrice: number, alertType: string) => {
     if (!isAuthenticated || !user || !selectedItem) {
       toast.error('You must be logged in to set price alerts');
@@ -193,4 +194,5 @@ export function WishlistScreen({ open, onClose }: WishlistScreenProps) {
       />
     </>
   );
+}
 }
