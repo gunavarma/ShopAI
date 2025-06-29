@@ -134,9 +134,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         password,
         options: {
+          emailRedirectTo: undefined,
           data: {
             full_name: name,
-          }
+          },
+          // Disable email confirmation
+          emailRedirectTo: undefined
         }
       });
 
