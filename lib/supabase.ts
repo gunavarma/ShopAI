@@ -7,34 +7,78 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 // Declare supabase client variable at module level
 let supabase: any;
 
-if (!supabaseUrl || !supabaseAnonKey) {
+// Validate Supabase URL format
+const isValidSupabaseUrl = (url: string | undefined): boolean => {
+  if (!url) return false;
+  try {
+    const urlObj = new URL(url);
+    return urlObj.hostname.includes('supabase.co') || urlObj.hostname.includes('supabase.in');
+  } catch {
+    return false;
+  }
+};
+
+if (!supabaseUrl || !supabaseAnonKey || !isValidSupabaseUrl(supabaseUrl)) {
   console.error('Missing Supabase environment variables. Please check your .env.local file.');
   console.error('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? 'Set' : 'Missing');
   console.error('NEXT_PUBLIC_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Set' : 'Missing');
+  if (supabaseUrl && !isValidSupabaseUrl(supabaseUrl)) {
+    console.error('Invalid Supabase URL format. Expected format: https://your-project.supabase.co');
+  }
   
   // Create a mock client to prevent app crashes during development
   const mockClient = {
     auth: {
       getSession: () => Promise.resolve({ data: { session: null }, error: null }),
       onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
-      signInWithPassword: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } }),
-      signUp: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } }),
+      signInWithPassword: () => Promise.resolve({ 
+        data: null, 
+        error: { 
+          message: 'Supabase not configured properly. Please check your environment variables and ensure your Supabase project is active.' 
+        } 
+      }),
+      signUp: () => Promise.resolve({ 
+        data: null, 
+        error: { 
+          message: 'Supabase not configured properly. Please check your environment variables and ensure your Supabase project is active.' 
+        } 
+      }),
       signOut: () => Promise.resolve({ error: null }),
-      updateUser: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } })
+      updateUser: () => Promise.resolve({ 
+        data: null, 
+        error: { 
+          message: 'Supabase not configured properly. Please check your environment variables and ensure your Supabase project is active.' 
+        } 
+      })
     },
     from: () => ({
       select: () => ({
         eq: () => ({
-          single: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } })
+          single: () => Promise.resolve({ 
+            data: null, 
+            error: { 
+              message: 'Supabase not configured properly. Please check your environment variables and ensure your Supabase project is active.' 
+            } 
+          })
         })
       }),
       insert: () => ({
         select: () => ({
-          single: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } })
+          single: () => Promise.resolve({ 
+            data: null, 
+            error: { 
+              message: 'Supabase not configured properly. Please check your environment variables and ensure your Supabase project is active.' 
+            } 
+          })
         })
       }),
       update: () => ({
-        eq: () => Promise.resolve({ data: null, error: { message: 'Supabase not configured' } })
+        eq: () => Promise.resolve({ 
+          data: null, 
+          error: { 
+            message: 'Supabase not configured properly. Please check your environment variables and ensure your Supabase project is active.' 
+          } 
+        })
       })
     })
   };
@@ -42,8 +86,79 @@ if (!supabaseUrl || !supabaseAnonKey) {
   // Assign mock client to supabase variable
   supabase = mockClient;
 } else {
-  // Assign real client to supabase variable
-  supabase = createClient(supabaseUrl, supabaseAnonKey);
+  try {
+    // Assign real client to supabase variable with additional options for better error handling
+    supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true
+      },
+      global: {
+        headers: {
+          'X-Client-Info': 'shopwhiz-app'
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Failed to create Supabase client:', error);
+    // Fall back to mock client if creation fails
+    supabase = {
+      auth: {
+        getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+        signInWithPassword: () => Promise.resolve({ 
+          data: null, 
+          error: { 
+            message: 'Failed to initialize Supabase client. Please check your configuration.' 
+          } 
+        }),
+        signUp: () => Promise.resolve({ 
+          data: null, 
+          error: { 
+            message: 'Failed to initialize Supabase client. Please check your configuration.' 
+          } 
+        }),
+        signOut: () => Promise.resolve({ error: null }),
+        updateUser: () => Promise.resolve({ 
+          data: null, 
+          error: { 
+            message: 'Failed to initialize Supabase client. Please check your configuration.' 
+          } 
+        })
+      },
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            single: () => Promise.resolve({ 
+              data: null, 
+              error: { 
+                message: 'Failed to initialize Supabase client. Please check your configuration.' 
+              } 
+            })
+          })
+        }),
+        insert: () => ({
+          select: () => ({
+            single: () => Promise.resolve({ 
+              data: null, 
+              error: { 
+                message: 'Failed to initialize Supabase client. Please check your configuration.' 
+              } 
+            })
+          })
+        }),
+        update: () => ({
+          eq: () => Promise.resolve({ 
+            data: null, 
+            error: { 
+              message: 'Failed to initialize Supabase client. Please check your configuration.' 
+            } 
+          })
+        })
+      })
+    };
+  }
 }
 
 // Export at module level
