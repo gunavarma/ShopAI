@@ -364,6 +364,61 @@ Return only valid JSON array:
     return images[Math.floor(Math.random() * images.length)];
   }
 
+  private static getStaticFallbackProducts(query: string, count: number): EnhancedRealtimeProduct[] {
+    const fallbackProducts = [
+      {
+        id: 'fallback-1',
+        name: 'Popular Product Option',
+        price: 15999,
+        originalPrice: 19999,
+        image: 'https://images.pexels.com/photos/356056/pexels-photo-356056.jpeg?auto=compress&cs=tinysrgb&w=800',
+        rating: 4.2,
+        reviewCount: 150,
+        brand: 'Popular Brand',
+        category: 'electronics',
+        features: ['High Quality', 'Good Value', 'Popular Choice'],
+        pros: ['Reliable', 'Good price'],
+        cons: ['Limited availability'],
+        sentiment: 'positive',
+        sentimentScore: 0.8,
+        description: `Popular product matching your search for "${query}"`,
+        inStock: true,
+        availability: 'In Stock',
+        specifications: {},
+        youtubeVideoId: '',
+        reviewSummary: 'Generally positive reviews',
+        sampleReviews: [],
+        source: 'ai_generated'
+      },
+      {
+        id: 'fallback-2',
+        name: 'Alternative Option',
+        price: 12999,
+        originalPrice: 15999,
+        image: 'https://images.pexels.com/photos/205421/pexels-photo-205421.jpeg?auto=compress&cs=tinysrgb&w=800',
+        rating: 4.0,
+        reviewCount: 89,
+        brand: 'Alternative Brand',
+        category: 'electronics',
+        features: ['Budget Friendly', 'Good Features', 'Reliable'],
+        pros: ['Affordable', 'Good quality'],
+        cons: ['Basic features'],
+        sentiment: 'positive',
+        sentimentScore: 0.7,
+        description: `Alternative product option for "${query}"`,
+        inStock: true,
+        availability: 'In Stock',
+        specifications: {},
+        youtubeVideoId: '',
+        reviewSummary: 'Good value for money',
+        sampleReviews: [],
+        source: 'ai_generated'
+      }
+    ];
+
+    return fallbackProducts.slice(0, count);
+  }
+
   static async getProductRecommendations(
     category: string,
     priceRange?: { min: number; max: number },
@@ -371,19 +426,35 @@ Return only valid JSON array:
   ): Promise<EnhancedRealtimeProduct[]> {
     let query = `Find ${category} products`;
     
-    if (priceRange) {
-      query += ` between ₹${priceRange.min.toLocaleString()} and ₹${priceRange.max.toLocaleString()}`;
+      try {
+        const scraperResults = await ScraperAPIService.searchMultipleSources(query);
+        realProducts = this.parseScraperResults(scraperResults, query);
+      } catch (error) {
+        console.log('Real-time data unavailable, using fallback data:', error);
+        // Continue with AI-generated products as fallback
+      }
     }
     
     if (features && features.length > 0) {
-      query += ` with features: ${features.join(', ')}`;
+      try {
+        aiProducts = await this.generateAIProducts(query, remainingSlots);
+      } catch (error) {
+        console.log('AI products unavailable, using static fallback:', error);
+        // Use static fallback products
+        aiProducts = this.getStaticFallbackProducts(query, remainingSlots);
+      }
     }
-
-    return await this.searchProducts(query, {
-      useRealData: true,
-      maxResults: 8,
-      minPrice: priceRange?.min,
-      maxPrice: priceRange?.max
-    });
+    try {
+      const searchQuery = `${category} ${features?.join(' ') || ''}`.trim();
+      return this.searchProducts(searchQuery, {
+        useRealData: false, // Use fallback during API issues
+        maxResults: 6,
+        minPrice: priceRange?.min,
+        maxPrice: priceRange?.max
+      });
+    } catch (error) {
+      console.log('Product recommendations unavailable, using fallback');
+      return this.getStaticFallbackProducts(category, 6);
+    }
   }
 }

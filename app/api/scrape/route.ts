@@ -11,12 +11,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const API_KEY = process.env.SCRAPER_API_KEY;
+    const API_KEY = process.env.NEXT_PUBLIC_SCRAPER_API_KEY;
     
     if (!API_KEY) {
-      console.error('SCRAPER_API_KEY not configured');
+      console.error('NEXT_PUBLIC_SCRAPER_API_KEY not configured');
       return NextResponse.json(
-        { error: 'ScraperAPI not configured' },
+        { error: 'ScraperAPI not configured. Please check your environment variables.' },
         { status: 500 }
       );
     }
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
       },
-      timeout: 30000 // 30 second timeout
+      signal: AbortSignal.timeout(30000) // 30 second timeout
     });
 
     if (!response.ok) {
