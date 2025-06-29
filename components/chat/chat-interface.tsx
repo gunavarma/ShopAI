@@ -350,6 +350,7 @@ export function ChatInterface() {
   };
 
   return (
+    <>
     <div className="flex h-screen relative">
       {/* Sidebar */}
       <Sidebar
@@ -627,5 +628,6 @@ export function ChatInterface() {
         onClose={() => setShowOrders(false)}
       />
     </div>
+    </>
   );
 }
