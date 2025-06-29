@@ -91,7 +91,9 @@ export function AuthModal({ open, onClose, defaultMode = 'login' }: AuthModalPro
           {
             description: mode === 'login' 
               ? 'You have been logged in successfully.' 
-              : 'Your account has been created and you are now logged in.'
+              : mode === 'register' 
+                ? 'Please check your email to verify your account.'
+                : 'Your account has been created and you are now logged in.'
           }
         );
         onClose();

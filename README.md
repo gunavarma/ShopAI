@@ -34,8 +34,9 @@ A modern e-commerce chatbot powered by Google's Gemini AI and real-time product 
 ## 📋 Prerequisites
 
 1. **Node.js** (v18 or higher)
-2. **Gemini AI API Key** - [Get free key](https://makersuite.google.com/app/apikey)
-3. **ScraperAPI Key** - [Get free key](https://www.scraperapi.com/) (1,000 free requests/month)
+2. **Supabase Project** - [Create free project](https://supabase.com/dashboard/new)
+3. **Gemini AI API Key** - [Get free key](https://makersuite.google.com/app/apikey)
+4. **ScraperAPI Key** - [Get free key](https://www.scraperapi.com/) (1,000 free requests/month)
 
 ## 🚀 Quick Setup
 
@@ -51,12 +52,32 @@ npm install
 # Copy the example environment file
 cp .env.local.example .env.local
 
-# Edit .env.local with your API keys
+# Edit .env.local with your configuration
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 NEXT_PUBLIC_GEMINI_API_KEY=your_actual_gemini_api_key
 NEXT_PUBLIC_SCRAPER_API_KEY=your_actual_scraper_api_key
 ```
 
-### 3. Get API Keys
+### 3. Set Up Supabase (Required for Authentication)
+
+#### **Create Supabase Project**
+1. Visit [Supabase Dashboard](https://supabase.com/dashboard/new)
+2. Click "New Project"
+3. Choose your organization and enter project details
+4. Wait for the project to be created (2-3 minutes)
+
+#### **Get Supabase Configuration**
+1. Go to Project Settings → API
+2. Copy your Project URL and Anon Key
+3. Add them to your `.env.local` file
+
+#### **Set Up Database Schema**
+1. Go to SQL Editor in your Supabase dashboard
+2. Copy the contents of `supabase/migrations/001_create_profiles_table.sql`
+3. Paste and run the SQL to create the profiles table and triggers
+
+### 4. Get API Keys
 
 #### **Gemini AI API Key** (Required)
 1. Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
@@ -70,7 +91,7 @@ NEXT_PUBLIC_SCRAPER_API_KEY=your_actual_scraper_api_key
 3. Get your API key from the dashboard
 4. Copy the key to your `.env.local` file
 
-### 4. Run the Application
+### 5. Run the Application
 ```bash
 npm run dev
 ```
@@ -78,6 +99,15 @@ npm run dev
 Open [http://localhost:3000](http://localhost:3000) to view the application.
 
 ## 🔧 Configuration Options
+
+### **Authentication**
+The app uses Supabase for authentication, providing:
+
+- **Email/Password Authentication**: Secure user registration and login
+- **Email Verification**: Optional email confirmation for new accounts
+- **Session Management**: Automatic token refresh and persistent sessions
+- **User Profiles**: Extended user data with preferences and settings
+- **Row Level Security**: Database-level security for user data
 
 ### **Data Sources**
 The app automatically uses the best available data source:
@@ -172,10 +202,12 @@ const response = await EnhancedAIAssistant.processQuery(userQuery);
 
 ## 🔒 Security & Privacy
 
+- **Authentication**: Powered by Supabase with industry-standard security
+- **Row Level Security**: Database-level access control
 - **API Keys**: Stored securely in environment variables
 - **Rate Limiting**: Built-in protection against API abuse
 - **Error Handling**: Comprehensive error management
-- **Data Privacy**: No user data stored permanently
+- **Data Privacy**: User data encrypted and securely stored in Supabase
 
 ## 🚀 Deployment
 
@@ -187,7 +219,11 @@ npm i -g vercel
 # Deploy
 vercel
 
-# Add environment variables in Vercel dashboard
+# Add environment variables in Vercel dashboard:
+# - NEXT_PUBLIC_SUPABASE_URL
+# - NEXT_PUBLIC_SUPABASE_ANON_KEY
+# - NEXT_PUBLIC_GEMINI_API_KEY
+# - NEXT_PUBLIC_SCRAPER_API_KEY
 ```
 
 ### **Other Platforms**
@@ -225,6 +261,11 @@ MIT License - see LICENSE file for details.
 
 ### **Common Issues**
 
+**Authentication not working:**
+- Check Supabase configuration in `.env.local`
+- Verify database schema is set up correctly
+- Check Supabase project status in dashboard
+
 **No products found:**
 - Check API keys in `.env.local`
 - Verify ScraperAPI account status
@@ -238,6 +279,7 @@ MIT License - see LICENSE file for details.
 **Rate limits:**
 - ScraperAPI: 1,000 requests/month (free)
 - Gemini AI: Generous free tier
+- Supabase: 50,000 monthly active users (free)
 - App automatically handles limits
 
 ### **Getting Help**
@@ -247,4 +289,4 @@ MIT License - see LICENSE file for details.
 
 ---
 
-**Built with ❤️ using Next.js, Gemini AI, and ScraperAPI**
+**Built with ❤️ using Next.js, Supabase, Gemini AI, and ScraperAPI**

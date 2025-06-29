@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from '@/contexts/auth-context';
+import { SupabaseSetupNotice } from '@/components/auth/supabase-setup-notice';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -28,6 +29,7 @@ export default function RootLayout({
         >
           <AuthProvider>
             {children}
+            <SupabaseSetupNotice />
             <Toaster />
           </AuthProvider>
         </ThemeProvider>
