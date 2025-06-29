@@ -4,6 +4,9 @@ import { User as SupabaseUser } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
+// Declare supabase client variable at module level
+let supabase: any;
+
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Missing Supabase environment variables. Please check your .env.local file.');
   console.error('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? 'Set' : 'Missing');
@@ -36,11 +39,15 @@ if (!supabaseUrl || !supabaseAnonKey) {
     })
   };
   
-  // @ts-ignore - This is a development fallback
-  export const supabase = mockClient;
+  // Assign mock client to supabase variable
+  supabase = mockClient;
 } else {
-  export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+  // Assign real client to supabase variable
+  supabase = createClient(supabaseUrl, supabaseAnonKey);
 }
+
+// Export at module level
+export { supabase };
 
 // Types
 export interface Profile {
