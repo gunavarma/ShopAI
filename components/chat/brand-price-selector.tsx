@@ -63,7 +63,7 @@ export function BrandPriceSelector({ category, onSelection, onSkip }: BrandPrice
         loadPriceRangesFromGemini()
       ]);
     } catch (error) {
-      console.error('Error loading dynamic data:', error);
+      console.warn('Error loading dynamic data, using fallback:', error);
       // Set fallback data
       setFallbackData();
     }
@@ -117,9 +117,12 @@ Return only the JSON array:
         setFallbackBrands();
       }
     } catch (error: any) {
-      console.error('Error loading brands from Gemini:', error);
+      // Handle API quota errors more gracefully
       if (error.message?.includes('quota')) {
+        console.warn('Gemini API quota exceeded for brands, using fallback data');
         setApiError('AI service temporarily unavailable. Using default options.');
+      } else {
+        console.warn('Error loading brands from Gemini:', error.message || error);
       }
       setFallbackBrands();
     } finally {
@@ -175,9 +178,12 @@ Return only the JSON array:
         setFallbackPriceRanges();
       }
     } catch (error: any) {
-      console.error('Error loading price ranges from Gemini:', error);
+      // Handle API quota errors more gracefully
       if (error.message?.includes('quota')) {
+        console.warn('Gemini API quota exceeded for price ranges, using fallback data');
         setApiError('AI service temporarily unavailable. Using default options.');
+      } else {
+        console.warn('Error loading price ranges from Gemini:', error.message || error);
       }
       setFallbackPriceRanges();
     } finally {

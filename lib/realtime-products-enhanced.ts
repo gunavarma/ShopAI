@@ -438,7 +438,7 @@ Return only valid JSON array:
       // Continue with AI-generated products as fallback
     }
     
-    if (features && features.length > 0) {
+    if (remainingSlots > 0) {
       try {
         aiProducts = await this.generateAIProducts(query, remainingSlots);
       } catch (error) {
@@ -447,17 +447,18 @@ Return only valid JSON array:
         aiProducts = this.getStaticFallbackProducts(query, remainingSlots);
       }
     }
-    try {
-      const searchQuery = `${category} ${features?.join(' ') || ''}`.trim();
-      return this.searchProducts(searchQuery, {
-        useRealData: false, // Use fallback during API issues
-        maxResults: 6,
-        minPrice: priceRange?.min,
-        maxPrice: priceRange?.max
-      });
-    } catch (error) {
-      console.log('Product recommendations unavailable, using fallback');
-      return this.getStaticFallbackProducts(category, 6);
+    
+    // Combine real and AI products
+    const allProducts = [...realProducts, ...aiProducts];
+    
+    // Filter by price range if specified
+    if (priceRange) {
+      return allProducts.filter(product => 
+        product.price >= (priceRange.min || 0) && 
+        product.price <= (priceRange.max || Infinity)
+      );
     }
+    
+    return allProducts;
   }
 }
