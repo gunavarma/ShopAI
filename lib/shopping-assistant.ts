@@ -1,4 +1,4 @@
-import { AIService } from './ai-service';
+import { geminiService } from './gemini';
 import { RealtimeProduct } from './realtime-products';
 
 export interface ProductRecommendation {
@@ -100,7 +100,6 @@ Return only valid JSON without markdown formatting:
 `;
 
       const response = await geminiService.generateResponse(analysisPrompt);
-      const response = await AIService.generateResponse(analysisPrompt);
       
       // Clean and parse the response
       let cleanResponse = response.replace(/```json\n?|\n?```/g, '').trim();

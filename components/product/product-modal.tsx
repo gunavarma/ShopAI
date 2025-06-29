@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { RealtimeProduct } from '@/lib/realtime-products';
-import { AIService } from '@/lib/ai-service';
+import { geminiService } from '@/lib/gemini';
 
 interface ProductModalProps {
   product: RealtimeProduct | null;
@@ -35,7 +35,7 @@ export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalP
     
     setIsLoadingImages(true);
     try {
-      const images = await AIService.getRelatedProductImages(
+      const images = await geminiService.getRelatedProductImages(
         product.name,
         product.category,
         product.brand

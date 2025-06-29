@@ -1,4 +1,4 @@
-import { AIService } from './ai-service';
+import { geminiService } from './gemini';
 import { ScraperAPIService, ScrapedProduct } from './scraper-api';
 
 export interface EnhancedRealtimeProduct {
@@ -129,7 +129,6 @@ Return only valid JSON:
 `;
 
       const response = await geminiService.generateResponse(enhancementPrompt);
-      const response = await AIService.generateResponse(enhancementPrompt);
       const cleanResponse = response.replace(/```json\n?|\n?```/g, '').trim();
       
       let enhancements;
@@ -266,7 +265,6 @@ Return only valid JSON array:
 `;
 
       const response = await geminiService.generateResponse(searchPrompt);
-      const response = await AIService.generateResponse(searchPrompt);
       const cleanResponse = response.replace(/```json\n?|\n?```/g, '').trim();
       
       let productsData;
@@ -440,7 +438,7 @@ Return only valid JSON array:
       // Continue with AI-generated products as fallback
     }
     
-    if (remainingSlots > 0) {
+    if (features && features.length > 0) {
       try {
         aiProducts = await this.generateAIProducts(query, remainingSlots);
       } catch (error) {
@@ -449,18 +447,17 @@ Return only valid JSON array:
         aiProducts = this.getStaticFallbackProducts(query, remainingSlots);
       }
     }
-    
-    // Combine real and AI products
-    const allProducts = [...realProducts, ...aiProducts];
-    
-    // Filter by price range if specified
-    if (priceRange) {
-      return allProducts.filter(product => 
-        product.price >= (priceRange.min || 0) && 
-        product.price <= (priceRange.max || Infinity)
-      );
+    try {
+      const searchQuery = `${category} ${features?.join(' ') || ''}`.trim();
+      return this.searchProducts(searchQuery, {
+        useRealData: false, // Use fallback during API issues
+        maxResults: 6,
+        minPrice: priceRange?.min,
+        maxPrice: priceRange?.max
+      });
+    } catch (error) {
+      console.log('Product recommendations unavailable, using fallback');
+      return this.getStaticFallbackProducts(category, 6);
     }
-    
-    return allProducts;
   }
 }

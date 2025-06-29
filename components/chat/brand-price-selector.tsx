@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Check, Sparkles, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AIService } from '@/lib/ai-service';
+import { geminiService } from '@/lib/gemini';
 
 interface BrandOption {
   name: string;
@@ -42,15 +42,12 @@ export function BrandPriceSelector({ category, onSelection, onSkip }: BrandPrice
   }, [category]);
 
   const loadDynamicData = async () => {
-    // Check if any AI providers are available
-    const providerStatus = AIService.getProviderStatus();
-    if (!providerStatus.current) {
-      const hasAnyProvider = providerStatus.available.length > 0;
+    // Check quota status immediately
+    if (geminiService.isQuotaExceeded()) {
+      const resetTime = geminiService.getQuotaResetTime();
+      const resetTimeStr = resetTime ? new Date(resetTime).toLocaleTimeString() : 'later';
       
-      setApiError(hasAnyProvider 
-        ? `AI service quota exceeded across all providers. Using default options.`
-        : `No AI providers configured. Using default options.`
-      );
+      setApiError(`AI service quota exceeded. Will reset around ${resetTimeStr}. Using default options.`);
       setFallbackData();
       return;
     }
@@ -66,7 +63,7 @@ export function BrandPriceSelector({ category, onSelection, onSkip }: BrandPrice
         loadPriceRangesFromGemini()
       ]);
     } catch (error) {
-      console.warn('Error loading dynamic data, using fallback:', error);
+      console.error('Error loading dynamic data:', error);
       // Set fallback data
       setFallbackData();
     }
@@ -105,7 +102,7 @@ Examples for different categories:
 Return only the JSON array:
 `;
 
-      const response = await AIService.generateResponse(prompt);
+      const response = await geminiService.generateResponse(prompt);
       const cleanResponse = response.replace(/```json\n?|\n?```/g, '').trim();
       
       try {
@@ -120,12 +117,9 @@ Return only the JSON array:
         setFallbackBrands();
       }
     } catch (error: any) {
-      // Handle API quota errors more gracefully
+      console.error('Error loading brands from Gemini:', error);
       if (error.message?.includes('quota')) {
-        console.warn('Gemini API quota exceeded for brands, using fallback data');
         setApiError('AI service temporarily unavailable. Using default options.');
-      } else {
-        console.warn('Error loading brands from Gemini:', error.message || error);
       }
       setFallbackBrands();
     } finally {
@@ -166,7 +160,7 @@ Example price ranges by category:
 Return only the JSON array:
 `;
 
-      const response = await AIService.generateResponse(prompt);
+      const response = await geminiService.generateResponse(prompt);
       const cleanResponse = response.replace(/```json\n?|\n?```/g, '').trim();
       
       try {
@@ -181,12 +175,9 @@ Return only the JSON array:
         setFallbackPriceRanges();
       }
     } catch (error: any) {
-      // Handle API quota errors more gracefully
+      console.error('Error loading price ranges from Gemini:', error);
       if (error.message?.includes('quota')) {
-        console.warn('Gemini API quota exceeded for price ranges, using fallback data');
         setApiError('AI service temporarily unavailable. Using default options.');
-      } else {
-        console.warn('Error loading price ranges from Gemini:', error.message || error);
       }
       setFallbackPriceRanges();
     } finally {

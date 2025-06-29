@@ -77,13 +77,11 @@ export function ChatInterface() {
   useEffect(() => {
     const hasGeminiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY && 
                         process.env.NEXT_PUBLIC_GEMINI_API_KEY !== 'your_gemini_api_key_here';
-    const hasDeepSeekKey = process.env.NEXT_PUBLIC_DEEPSEEK_API_KEY && 
-                          process.env.NEXT_PUBLIC_DEEPSEEK_API_KEY !== 'your_deepseek_api_key_here';
     const hasScraperKey = process.env.NEXT_PUBLIC_SCRAPER_API_KEY && 
                          process.env.NEXT_PUBLIC_SCRAPER_API_KEY !== 'your_scraper_api_key_here';
 
-    if (!hasGeminiKey && !hasDeepSeekKey) {
-      setApiError('No AI providers configured. Please add Gemini AI or DeepSeek API key to .env.local');
+    if (!hasGeminiKey) {
+      setApiError('Gemini AI key not configured. Please add your API key to .env.local');
     } else if (!hasScraperKey) {
       setApiError('ScraperAPI key not configured. Using AI-generated product data only.');
     } else {
@@ -425,11 +423,6 @@ export function ChatInterface() {
                 {apiError.includes('Gemini') && (
                   <span className="block mt-1 text-xs text-muted-foreground">
                     Get your free API key from <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="underline">Google AI Studio</a>
-                  </span>
-                )}
-                {apiError.includes('No AI providers') && (
-                  <span className="block mt-1 text-xs text-muted-foreground">
-                    Get Gemini AI key from <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="underline">Google AI Studio</a> or DeepSeek key from <a href="https://platform.deepseek.com/" target=\"_blank" rel="noopener noreferrer\" className="underline">DeepSeek Platform</a>
                   </span>
                 )}
                 {apiError.includes('ScraperAPI') && (
