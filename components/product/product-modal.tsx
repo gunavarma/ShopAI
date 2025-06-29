@@ -213,7 +213,6 @@ export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalP
                       title={`${product.name} Review`}
                       className="w-full h-full"
                       frameBorder="0"
-                        target.src = product.image || 'https://images.pexels.com/photos/356056/pexels-photo-356056.jpeg?auto=compress&cs=tinysrgb&w=800';
                       allowFullScreen
                     />
                   </div>
