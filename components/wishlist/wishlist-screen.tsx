@@ -72,6 +72,7 @@ export function WishlistScreen({ open, onClose }: WishlistScreenProps) {
   const [showPriceAlertModal, setShowPriceAlertModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<WishlistItem | null>(null);
   const [activeAlerts, setActiveAlerts] = useState<number>(0);
+
   const [notificationSettings, setNotificationSettings] = useState({
     email: 'john@example.com',
     phone: '+91 9876543210',
@@ -189,10 +190,9 @@ export function WishlistScreen({ open, onClose }: WishlistScreenProps) {
       toast.error('Failed to set price alert');
     }
   };
-
         item={selectedItem}
+        onSave={handlePriceAlertSave}
       />
     </>
   );
-}
 }
