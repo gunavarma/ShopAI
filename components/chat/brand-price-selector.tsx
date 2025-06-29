@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Check, Sparkles, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { geminiService } from '@/lib/gemini';
+import { AIService } from '@/lib/ai-service';
 
 interface BrandOption {
   name: string;
@@ -42,12 +42,15 @@ export function BrandPriceSelector({ category, onSelection, onSkip }: BrandPrice
   }, [category]);
 
   const loadDynamicData = async () => {
-    // Check quota status immediately
-    if (geminiService.isQuotaExceeded()) {
-      const resetTime = geminiService.getQuotaResetTime();
-      const resetTimeStr = resetTime ? new Date(resetTime).toLocaleTimeString() : 'later';
+    // Check if any AI providers are available
+    const providerStatus = AIService.getProviderStatus();
+    if (!providerStatus.current) {
+      const hasAnyProvider = providerStatus.available.length > 0;
       
-      setApiError(`AI service quota exceeded. Will reset around ${resetTimeStr}. Using default options.`);
+      setApiError(hasAnyProvider 
+        ? `AI service quota exceeded across all providers. Using default options.`
+        : `No AI providers configured. Using default options.`
+      );
       setFallbackData();
       return;
     }
@@ -102,7 +105,7 @@ Examples for different categories:
 Return only the JSON array:
 `;
 
-      const response = await geminiService.generateResponse(prompt);
+      const response = await AIService.generateResponse(prompt);
       const cleanResponse = response.replace(/```json\n?|\n?```/g, '').trim();
       
       try {
@@ -163,7 +166,7 @@ Example price ranges by category:
 Return only the JSON array:
 `;
 
-      const response = await geminiService.generateResponse(prompt);
+      const response = await AIService.generateResponse(prompt);
       const cleanResponse = response.replace(/```json\n?|\n?```/g, '').trim();
       
       try {
