@@ -408,7 +408,7 @@ export function ChatInterface() {
                 )}
                 {apiError.includes('Real-time data API') && (
                   <span className="block mt-1 text-xs text-muted-foreground">
-                    Get SERP API key from <a href="https://serpapi.com/" target="_blank" rel="noopener noreferrer" className="underline">SerpApi</a> or ScraperAPI key from <a href="https://www.scraperapi.com/" target="_blank" rel="noopener noreferrer" className="underline">ScraperAPI</a>
+                    Get SERP API key from <a href="https://serpapi.com/" target="_blank" rel="noopener noreferrer" className="underline">SerpApi</a> or ScraperAPI key from <a href="https://www.scraperapi.com/" target=\"_blank" rel="noopener noreferrer\" className="underline">ScraperAPI</a>
                   </span>
                 )}
               </AlertDescription>
