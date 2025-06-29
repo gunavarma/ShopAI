@@ -52,11 +52,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadUserProfile = async (supabaseUser: SupabaseUser) => {
     try {
       // Try to get user profile from profiles table
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', supabaseUser.id)
         .single();
+
+      // If profile doesn't exist, create one
+      if (profileError && profileError.code === 'PGRST116') {
+        console.log('Profile not found, creating new profile...');
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert([
+            {
+              id: supabaseUser.id,
+              email: supabaseUser.email || '',
+              full_name: supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User',
+              preferences: {
+                theme: 'dark',
+                notifications: true,
+                currency: 'INR',
+                language: 'en'
+              }
+            }
+          ])
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('Error creating profile:', createError);
+          // Fallback to basic user info if profile creation fails
+          const authUser = transformSupabaseUser(supabaseUser);
+          setUser(authUser);
+          return;
+        }
+
+        const authUser = transformSupabaseUser(supabaseUser, newProfile);
+        setUser(authUser);
+        return;
+      }
+
+      if (profileError) {
+        console.error('Error loading user profile:', profileError);
+        // Fallback to basic user info
+        const authUser = transformSupabaseUser(supabaseUser);
+        setUser(authUser);
+        return;
+      }
 
       const authUser = transformSupabaseUser(supabaseUser, profile);
       setUser(authUser);
