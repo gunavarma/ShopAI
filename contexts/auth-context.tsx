@@ -25,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Get initial session
     const getInitialSession = async () => {
+      try {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         await loadUserProfile(session.user);
@@ -41,8 +42,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await loadUserProfile(session.user);
         } else {
           setUser(null);
+        } else {
+          setUser(null);
         }
+        console.log('Auth state change:', event, session?.user?.email);
+        
+      } catch (error) {
+        console.error('Error getting initial session:', error);
+        setUser(null);
+      } finally {
         setIsLoading(false);
+        
+        // Only set loading to false after processing the auth change
+        if (event !== 'INITIAL_SESSION') {
+          setIsLoading(false);
+        }
       }
     );
 
@@ -112,24 +126,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
+      setIsLoading(true);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        setIsLoading(false);
         return { success: false, error: error.message };
       }
 
+      // Don't set loading to false here - let the auth state change handler do it
       return { success: true };
     } catch (error) {
       console.error('Login error:', error);
+      setIsLoading(false);
       return { success: false, error: 'Login failed' };
     }
   };
 
   const register = async (email: string, password: string, name: string) => {
     try {
+      setIsLoading(true);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -144,6 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (error) {
+        setIsLoading(false);
         return { success: false, error: error.message };
       }
 
@@ -170,19 +190,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
+      // Don't set loading to false here - let the auth state change handler do it
       return { success: true };
     } catch (error) {
       console.error('Registration error:', error);
+      setIsLoading(false);
       return { success: false, error: 'Registration failed' };
     }
   };
 
   const logout = async () => {
     try {
+      setIsLoading(true);
       await supabase.auth.signOut();
       setUser(null);
+      setIsLoading(false);
     } catch (error) {
       console.error('Logout error:', error);
+      setIsLoading(false);
     }
   };
 

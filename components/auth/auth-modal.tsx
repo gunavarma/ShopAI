@@ -96,16 +96,23 @@ export function AuthModal({ open, onClose, defaultMode = 'login' }: AuthModalPro
                 : 'Your account has been created and you are now logged in.'
           }
         );
-        onClose();
-        // Reset form
-        setFormData({ email: '', password: '', name: '', confirmPassword: '' });
+        
+        // Wait a bit for auth state to update, then close modal
+        setTimeout(() => {
+          onClose();
+          // Reset form
+          setFormData({ email: '', password: '', name: '', confirmPassword: '' });
+          setIsLoading(false);
+        }, 1000);
       } else {
         toast.error(result.error || `${mode === 'login' ? 'Login' : 'Registration'} failed`);
+        setIsLoading(false);
       }
     } catch (error) {
       toast.error('An unexpected error occurred');
-    } finally {
       setIsLoading(false);
+    } finally {
+      // Don't set loading to false here - let the success/error handlers do it
     }
   };
 
