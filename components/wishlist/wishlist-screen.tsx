@@ -72,6 +72,52 @@ export function WishlistScreen({ open, onClose }: WishlistScreenProps) {
   const [showPriceAlertModal, setShowPriceAlertModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<WishlistItem | null>(null);
   const [activeAlerts, setActiveAlerts] = useState<number>(0);
+  
+  const handlePriceAlertSave = async (targetPrice: number, alertType: string) => {
+    if (!isAuthenticated || !user || !selectedItem) {
+      toast.error('You must be logged in to set price alerts');
+      setShowPriceAlertModal(false);
+      return;
+    }
+    
+    try {
+      // Update wishlist item with target price and enable alert
+      await WishlistAPI.updateWishlistItem(user.id, selectedItem.id, {
+        target_price: targetPrice,
+        alert_enabled: true
+      });
+      
+      // Create price alert in database
+      await PriceAlertsAPI.createPriceAlert({
+        user_id: user.id,
+        wishlist_item_id: selectedItem.id,
+        target_price: targetPrice,
+        alert_type: alertType === 'drops below' ? 'drops_below' : 'percentage_discount',
+        percentage: alertType === 'percentage' ? 10 : undefined,
+        is_active: true,
+        last_checked: new Date().toISOString()
+      });
+      
+      // Update local state
+      setWishlistItems(items =>
+        items.map(item =>
+          item.id === selectedItem.id 
+            ? { ...item, targetPrice, alertEnabled: true }
+            : item
+        )
+      );
+      
+      toast.success('Price alert set!', {
+        description: `You'll be notified when ${selectedItem.name} ${alertType} ₹${targetPrice.toLocaleString()}`
+      });
+      
+      setShowPriceAlertModal(false);
+      setSelectedItem(null);
+    } catch (error) {
+      console.error('Error setting price alert:', error);
+      toast.error('Failed to set price alert');
+    }
+  };
 
   const [notificationSettings, setNotificationSettings] = useState({
     email: 'john@example.com',
@@ -144,57 +190,9 @@ export function WishlistScreen({ open, onClose }: WishlistScreenProps) {
       <PriceAlertModal
         open={showPriceAlertModal}
         onClose={() => setShowPriceAlertModal(false)}
-  )
-  )
-  const handlePriceAlertSave = async (targetPrice: number, alertType: string) => {
-    if (!isAuthenticated || !user || !selectedItem) {
-      toast.error('You must be logged in to set price alerts');
-      setShowPriceAlertModal(false);
-      return;
-    }
-    
-    try {
-      // Update wishlist item with target price and enable alert
-      await WishlistAPI.updateWishlistItem(user.id, selectedItem.id, {
-        target_price: targetPrice,
-        alert_enabled: true
-      });
-      
-      // Create price alert in database
-      await PriceAlertsAPI.createPriceAlert({
-        user_id: user.id,
-        wishlist_item_id: selectedItem.id,
-        target_price: targetPrice,
-        alert_type: alertType === 'drops below' ? 'drops_below' : 'percentage_discount',
-        percentage: alertType === 'percentage' ? 10 : undefined,
-        is_active: true,
-        last_checked: new Date().toISOString()
-      });
-      
-      // Update local state
-      setWishlistItems(items =>
-        items.map(item =>
-          item.id === selectedItem.id 
-            ? { ...item, targetPrice, alertEnabled: true }
-            : item
-        )
-      );
-      
-      toast.success('Price alert set!', {
-        description: `You'll be notified when ${selectedItem.name} ${alertType} ₹${targetPrice.toLocaleString()}`
-      });
-      
-      setShowPriceAlertModal(false);
-      setSelectedItem(null);
-    } catch (error) {
-      console.error('Error setting price alert:', error);
-      toast.error('Failed to set price alert');
-    }
-  };
         item={selectedItem}
         onSave={handlePriceAlertSave}
       />
     </>
   );
-}
 }
