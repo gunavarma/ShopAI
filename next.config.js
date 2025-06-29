@@ -1,12 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
+  experimental: {
+    appDir: true,
   },
-  images: { unoptimized: true },
-  webpack: (config) => {
-    config.cache = false;
-    return config;
+  images: {
+    domains: ['images.pexels.com', 'via.placeholder.com'],
   },
 };
 
