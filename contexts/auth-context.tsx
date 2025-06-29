@@ -26,12 +26,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Get initial session
     const getInitialSession = async () => {
       try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          await loadUserProfile(session.user);
+        }
+      } catch (error) {
+        console.error('Error getting initial session:', error);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
       }
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        await loadUserProfile(session.user);
-      }
-      setIsLoading(false);
     };
 
     getInitialSession();
@@ -43,16 +47,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await loadUserProfile(session.user);
         } else {
           setUser(null);
-        } else {
-          setUser(null);
         }
         console.log('Auth state change:', event, session?.user?.email);
-        
-      } catch (error) {
-        console.error('Error getting initial session:', error);
-        setUser(null);
-      } finally {
-        setIsLoading(false);
         
         // Only set loading to false after processing the auth change
         if (event !== 'INITIAL_SESSION') {
