@@ -120,11 +120,6 @@ export function ChatInterface() {
       // Remove typing indicator
       setMessages(prev => prev.filter(msg => msg.id !== 'typing'));
 
-      // Check for API error in response
-      if (response.apiError) {
-        setApiError(response.apiError);
-      }
-
       // Store real-time products and data source
       if (response.products) {
         setRealtimeProducts(response.products);
@@ -194,11 +189,6 @@ export function ChatInterface() {
       
       setMessages(prev => prev.filter(msg => msg.id !== 'typing-selection'));
 
-      // Check for API error in response
-      if (response.apiError) {
-        setApiError(response.apiError);
-      }
-
       if (response.products) {
         setRealtimeProducts(response.products);
         setDataSource(response.dataSource || 'ai_generated');
@@ -262,11 +252,6 @@ export function ChatInterface() {
       const response = await EnhancedAIAssistant.processQuizAnswers(answers);
       
       setMessages(prev => prev.filter(msg => msg.id !== 'typing-quiz'));
-
-      // Check for API error in response
-      if (response.apiError) {
-        setApiError(response.apiError);
-      }
 
       if (response.products) {
         setRealtimeProducts(response.products);

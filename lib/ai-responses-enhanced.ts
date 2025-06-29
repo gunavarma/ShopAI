@@ -13,31 +13,16 @@ export interface EnhancedAIResponse {
   needsMoreInfo?: boolean;
   category?: string;
   dataSource?: 'real_time' | 'ai_generated' | 'mixed';
-  apiError?: string; // For API quota/error handling
 }
 
 export class EnhancedAIAssistant {
   static async processQuery(query: string): Promise<EnhancedAIResponse> {
-    // Check quota status immediately
-    if (geminiService.isQuotaExceeded()) {
-      const resetTime = geminiService.getQuotaResetTime();
-      const resetTimeStr = resetTime ? new Date(resetTime).toLocaleTimeString() : 'later';
-      
-      return {
-        message: `I'm currently experiencing API quota limits and can't process AI-powered searches right now. The service will be available again around ${resetTimeStr}. In the meantime, I can show you some popular products from our database.`,
-        products: [],
-        suggestedActions: ['Show popular products', 'Browse categories', 'Try basic search'],
-        dataSource: 'ai_generated',
-        apiError: `API quota exceeded. Service will reset around ${resetTimeStr}.`
-      };
-    }
-
     const lowercaseQuery = query.toLowerCase();
     
     // Handle greetings
     if (lowercaseQuery.includes('hello') || lowercaseQuery.includes('hi') || lowercaseQuery.includes('hey')) {
       return {
-        message: "Hello! I'm ShopWhiz, your AI shopping assistant. I can help you find products with pricing, reviews, and availability information. What are you looking for today?",
+        message: "Hello! I'm ShopWhiz, your AI shopping assistant powered by real-time data from Google Shopping and Amazon India. I can help you find any product with live prices, reviews, and availability. What are you looking for today?",
         suggestedActions: ['Apple iPhone 15', 'Samsung Galaxy S24', 'MacBook Pro', 'Sony headphones', 'Nike shoes', 'Gaming laptops'],
         dataSource: 'ai_generated'
       };
@@ -45,30 +30,14 @@ export class EnhancedAIAssistant {
 
     try {
       // Analyze the query intent
-      let intent;
-      try {
-        intent = await this.analyzeQueryIntent(query);
-      } catch (error) {
-        // Fallback intent analysis if AI is unavailable
-        intent = {
-          isSpecific: query.split(' ').length > 2,
-          category: this.extractCategoryFromQuery(query),
-          needsClarification: query.split(' ').length <= 2,
-          missingInfo: ['brand', 'price']
-        };
-      }
+      const intent = await this.analyzeQueryIntent(query);
       
       // If the query is too general, show brand/price selection
       if (intent.needsClarification && !intent.isSpecific) {
-        let conversationalResponse;
-        try {
-          conversationalResponse = await this.generateConversationalResponse(
-            query,
-            intent.category || 'product'
-          );
-        } catch (error) {
-          conversationalResponse = `I'd love to help you find the perfect ${intent.category || 'product'}! Let me show you some popular brands and price options to choose from.`;
-        }
+        const conversationalResponse = await this.generateConversationalResponse(
+          query,
+          intent.category || 'product'
+        );
 
         return {
           message: conversationalResponse,
@@ -82,7 +51,7 @@ export class EnhancedAIAssistant {
       // Search for products using enhanced service
       console.log('Searching for products:', query);
       const products = await EnhancedRealtimeProductService.searchProducts(query, {
-        useRealData: false, // Disable real-time data when APIs are having issues
+        useRealData: true,
         maxResults: 8
       });
 
@@ -101,11 +70,7 @@ export class EnhancedAIAssistant {
         }
 
         // Generate contextual message
-        try {
-          message = await this.generateProductMessage(query, products, dataSource);
-        } catch (error) {
-          message = `Great! I found ${products.length} products for "${query}". Here are the best options for you:`;
-        }
+        message = await this.generateProductMessage(query, products, dataSource);
       } else {
         message = `I couldn't find any products matching "${query}". This might be because:
 • The specific product model isn't available
@@ -143,11 +108,7 @@ Would you like me to show you popular products in this category instead?`;
           sampleReviews: p.sampleReviews
         }));
 
-        try {
-          structuredRecommendations = await ShoppingAssistantService.analyzeAndRecommend(query, compatibleProducts);
-        } catch (error) {
-          console.log('Structured recommendations unavailable due to API limits');
-        }
+        structuredRecommendations = await ShoppingAssistantService.analyzeAndRecommend(query, compatibleProducts);
       }
 
       return {
@@ -158,19 +119,8 @@ Would you like me to show you popular products in this category instead?`;
         dataSource
       };
 
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error processing enhanced query:', error);
-      
-      // Check if it's a quota error
-      if (error.message?.includes('quota')) {
-        return {
-          message: `I'm currently experiencing API quota limits and can't process AI-powered searches right now. I can still show you some popular products from our database.`,
-          products: [],
-          suggestedActions: ['Show popular products', 'Browse categories', 'Try basic search'],
-          dataSource: 'ai_generated',
-          apiError: 'API quota exceeded. Please try again later.'
-        };
-      }
       
       return {
         message: `I encountered an error while searching for "${query}". This could be due to:
@@ -359,20 +309,6 @@ Return only the response text:
     priceRange: string,
     category: string
   ): Promise<EnhancedAIResponse> {
-    // Check quota status immediately
-    if (geminiService.isQuotaExceeded()) {
-      const resetTime = geminiService.getQuotaResetTime();
-      const resetTimeStr = resetTime ? new Date(resetTime).toLocaleTimeString() : 'later';
-      
-      return {
-        message: `I'm currently experiencing API quota limits. I can still search for ${brand !== 'any' ? brand + ' ' : ''}${category} products using our product database, but AI-powered recommendations will be available again around ${resetTimeStr}.`,
-        products: [],
-        suggestedActions: ['Show popular products', 'Browse categories', 'Try again later'],
-        dataSource: 'ai_generated',
-        apiError: `API quota exceeded. Service will reset around ${resetTimeStr}.`
-      };
-    }
-
     try {
       let searchQuery = '';
       
@@ -441,19 +377,8 @@ Return only the response text:
         dataSource
       };
 
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error processing brand/price selection:', error);
-      
-      // Check if it's a quota error
-      if (error.message?.includes('quota')) {
-        return {
-          message: `I'm currently experiencing API quota limits. I can still search for ${brand !== 'any' ? brand + ' ' : ''}${category} products, but AI-powered features are temporarily unavailable.`,
-          products: [],
-          suggestedActions: ['Show popular products', 'Browse categories', 'Try again later'],
-          dataSource: 'ai_generated',
-          apiError: 'API quota exceeded. Please try again later.'
-        };
-      }
       
       return {
         message: `I encountered an error while searching for ${brand !== 'any' ? brand + ' ' : ''}${category} products. Please try again or browse our popular products.`,
@@ -465,20 +390,6 @@ Return only the response text:
   }
 
   static async processQuizAnswers(answers: Array<{questionId: string, answer: string}>): Promise<EnhancedAIResponse> {
-    // Check quota status immediately
-    if (geminiService.isQuotaExceeded()) {
-      const resetTime = geminiService.getQuotaResetTime();
-      const resetTimeStr = resetTime ? new Date(resetTime).toLocaleTimeString() : 'later';
-      
-      return {
-        message: `I'm currently experiencing API quota limits and can't process personalized quiz recommendations right now. The service will be available again around ${resetTimeStr}. I can still show you popular products based on your category preferences.`,
-        products: [],
-        suggestedActions: ['Show popular products', 'Browse categories', 'Try direct search'],
-        dataSource: 'ai_generated',
-        apiError: `API quota exceeded. Service will reset around ${resetTimeStr}.`
-      };
-    }
-
     try {
       // Extract preferences from quiz answers
       const categoryAnswer = answers.find(a => a.questionId === 'category')?.answer.toLowerCase();
@@ -534,19 +445,8 @@ Return only the response text:
         dataSource
       };
 
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error processing quiz:', error);
-      
-      // Check if it's a quota error
-      if (error.message?.includes('quota')) {
-        return {
-          message: "I'm currently experiencing API quota limits and can't generate personalized quiz recommendations. Would you like to try a direct search instead?",
-          products: [],
-          suggestedActions: ['Try direct search', 'Browse categories', 'Try again later'],
-          dataSource: 'ai_generated',
-          apiError: 'API quota exceeded. Please try again later.'
-        };
-      }
       
       return {
         message: "Based on your preferences, I'm having trouble finding the perfect products right now. Would you like to try a direct search instead?",

@@ -42,16 +42,6 @@ export function BrandPriceSelector({ category, onSelection, onSkip }: BrandPrice
   }, [category]);
 
   const loadDynamicData = async () => {
-    // Check quota status immediately
-    if (geminiService.isQuotaExceeded()) {
-      const resetTime = geminiService.getQuotaResetTime();
-      const resetTimeStr = resetTime ? new Date(resetTime).toLocaleTimeString() : 'later';
-      
-      setApiError(`AI service quota exceeded. Will reset around ${resetTimeStr}. Using default options.`);
-      setFallbackData();
-      return;
-    }
-
     setIsLoadingBrands(true);
     setIsLoadingPrices(true);
     setApiError('');

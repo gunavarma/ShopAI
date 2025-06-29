@@ -58,18 +58,3 @@ export interface ProductReview {
   reviewer: string;
   date: string;
 }
-
-// Enhanced AI Response with API error handling
-export interface EnhancedAIResponse {
-  message: string;
-  products?: any[];
-  suggestedActions?: string[];
-  requiresQuiz?: boolean;
-  structuredRecommendations?: ShoppingAssistantResponse;
-  clarifyingQuestions?: string[];
-  brandSuggestions?: string[];
-  needsMoreInfo?: boolean;
-  category?: string;
-  dataSource?: 'real_time' | 'ai_generated' | 'mixed';
-  apiError?: string; // For API quota/error handling
-}
