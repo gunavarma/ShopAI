@@ -12,6 +12,14 @@ import { PaymentModal } from '../payment/payment-modal';
 import { WishlistAPI, CartAPI } from '@/lib/database';
 
 const getSentimentColor = (sentiment: string) => {
+  switch (sentiment) {
+    case 'positive': return 'text-green-500';
+    case 'negative': return 'text-red-500';
+    default: return 'text-yellow-500';
+  }
+};
+
+const getSentimentColor = (sentiment: string) => {
   switch (sentiment?.toLowerCase()) {
     case 'positive':
       return 'text-green-500';
@@ -38,7 +46,7 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
   
   const nextProduct = () => {
     setCurrentIndex((prev) => 
-      prev + 3 >= products.length ? 0 : prev + 3
+  const handleBuyNow = (product: EnhancedRealtimeProduct) => {
     );
   };
   
