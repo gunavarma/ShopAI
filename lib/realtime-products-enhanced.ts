@@ -194,7 +194,7 @@ Return only valid JSON:
           inStock: scraped.availability !== 'Out of Stock',
           availability: scraped.availability,
           specifications: enhancement.specifications || {},
-          youtubeVideoId: enhancement.youtubeVideoId,
+          youtubeVideoId: scraped.youtubeVideoId || enhancement.youtubeVideoId,
           reviewSummary: enhancement.reviewSummary || 'Great product with positive user feedback.',
           sampleReviews: enhancement.sampleReviews || [],
           source: scraped.source,

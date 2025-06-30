@@ -111,12 +111,12 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
   return (
     <>
       <motion.div
-        initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                  className="aspect-square mb-3 rounded-lg overflow-hidden bg-muted relative group shadow-lg"
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.3 }}
         className="relative"
       >
-                  <Button
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                     size="sm"
                     className="flex-1 neon-glow"
                     onClick={async (e) => {
@@ -134,6 +134,16 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
                   </Button>
                   <Button
                     variant="outline"
+                  {/* YouTube indicator */}
+                  {product.youtubeVideoId && (
+                    <div className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="flex items-center gap-1 px-2 py-1 bg-red-600/90 rounded-full">
+                        <Play className="w-3 h-3 text-white" />
+                        <span className="text-xs text-white font-medium">YouTube</span>
+                      </div>
+                    </div>
+                  )}
+                  
                     size="sm"
                     onClick={async (e) => {
                       e.stopPropagation();

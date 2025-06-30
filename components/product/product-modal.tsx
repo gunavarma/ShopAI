@@ -245,7 +245,7 @@ export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalP
                 )}
 
                 {/* YouTube Video */}
-                {product.youtubeVideoId && (
+                {product.youtubeVideoId && product.youtubeVideoId.length > 5 && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
