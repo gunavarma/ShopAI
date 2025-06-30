@@ -186,7 +186,7 @@ export function CartScreen({ open, onClose }: CartScreenProps) {
               <div>
                 <DialogTitle className="text-xl font-semibold">Shopping Cart</DialogTitle>
                 <p className="text-sm text-muted-foreground">
-                  {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'} in your cart
+                    : 'You haven&apos;t placed any orders yet'
                   {!isAuthenticated && ' (Guest)'}
                 </p>
               </div>

@@ -31,17 +31,20 @@ import { CartAPI, WishlistAPI, OrdersAPI } from '@/lib/database';
 interface ProfileDropdownProps {
   onSettingsClick?: () => void;
   onWishlistClick?: () => void;
+  onCartClick?: () => void;
   onOrdersClick?: () => void;
 }
 
 export function ProfileDropdown({ 
   onSettingsClick, 
+  onCartClick,
   onCartClick, 
   onOrdersClick 
 }: ProfileDropdownProps) {
   const { user, logout } = useAuth();
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
+  const [orderCount, setOrderCount] = useState(0);
   useEffect(() => {
     const fetchCounts = async () => {
       if (!user) return;
