@@ -480,6 +480,7 @@ export function ChatInterfaceEnhanced() {
         onSettingsClick={() => setShowSettings(true)}
         onCartClick={() => setShowCart(true)}
         onWishlistClick={() => setShowWishlist(true)}
+        onBooksClick={() => {}} // Add empty handler for onBooksClick
         onOrdersClick={() => setShowOrders(true)}
         currentChatId={currentChat?.id}
         chats={chats}

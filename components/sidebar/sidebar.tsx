@@ -55,7 +55,7 @@ interface SidebarProps {
   onSettingsClick: () => void;
   onCartClick: () => void;
   onWishlistClick: () => void;
-  onBooksClick: () => void;
+ onBooksClick?: () => void;
   onOrdersClick: () => void;
   currentChatId?: string;
   chats?: ChatHistory[];
