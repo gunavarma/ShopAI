@@ -11,6 +11,19 @@ import { AuthModal } from '../auth/auth-modal';
 import { PaymentModal } from '../payment/payment-modal';
 import { WishlistAPI, CartAPI } from '@/lib/database';
 
+const getSentimentColor = (sentiment: string) => {
+  switch (sentiment?.toLowerCase()) {
+    case 'positive':
+      return 'text-green-500';
+    case 'negative':
+      return 'text-red-500';
+    case 'neutral':
+      return 'text-yellow-500';
+    default:
+      return 'text-gray-500';
+  }
+};
+
 interface ProductCarouselProps {
   products: EnhancedRealtimeProduct[];
 }
