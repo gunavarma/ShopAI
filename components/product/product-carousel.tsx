@@ -23,6 +23,18 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [loading, setLoading] = useState(false);
   
+  const nextProduct = () => {
+    setCurrentIndex((prev) => 
+      prev + 3 >= products.length ? 0 : prev + 3
+    );
+  };
+  
+  const prevProduct = () => {
+    setCurrentIndex((prev) => 
+      prev - 3 < 0 ? Math.max(0, products.length - 3) : prev - 3
+    );
+  };
+  
   if (!products || products.length === 0) return null;
 
   const handleBuyNow = (product: RealtimeProduct) => {
