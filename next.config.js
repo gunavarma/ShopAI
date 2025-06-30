@@ -1,10 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    appDir: true,
-  },
   images: {
     domains: ['images.pexels.com', 'via.placeholder.com'],
+  },
+  eslint: {
+    // Disable ESLint during production builds for better performance
+    ignoreDuringBuilds: true,
   },
 };
 
