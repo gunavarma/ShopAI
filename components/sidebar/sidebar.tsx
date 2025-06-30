@@ -193,7 +193,9 @@ export function Sidebar({
 
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <img src="/infinity.png" alt="ShopWhiz Logo" className="w-6 h-6" />
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-r from-primary to-purple-400 flex items-center justify-center">
+                      <ShoppingBag className="w-3 h-3 text-white" />
+                    </div>
                     <h2 className="font-semibold gradient-text">ShopWhiz</h2>
                   </div>
                   <p className="text-xs text-muted-foreground">AI Shopping Assistant</p>
