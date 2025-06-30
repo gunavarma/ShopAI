@@ -408,26 +408,6 @@ export function Sidebar({
                   variant="ghost"
                   size="sm"
                   className="w-full justify-start"
-                  onClick={() => window.open('https://www.amazon.in', '_blank')}
-                >
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Compare on Amazon
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start"
-                  onClick={() => window.open('https://www.flipkart.com', '_blank')}
-                >
-                  <ExternalLink className="w-4 h-4 mr-2" />
-                  Compare on Flipkart
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start"
                   onClick={onSettingsClick}
                 >
                   <Settings className="w-4 h-4 mr-2" />
