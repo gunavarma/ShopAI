@@ -5,18 +5,18 @@ import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Star, TrendingUp, ShoppingCart, ExternalLink, CheckCircle, AlertCircle, Heart, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { RealtimeProduct } from '@/lib/realtime-products';
+import { EnhancedRealtimeProduct } from '@/lib/realtime-products-enhanced';
 import { ProductModal } from '../product/product-modal';
 import { PaymentModal } from '../payment/payment-modal';
 
 interface ProductCarouselProps {
-  products: RealtimeProduct[];
+  products: EnhancedRealtimeProduct[];
 }
 
 export function ProductCarousel({ products }: ProductCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedProduct, setSelectedProduct] = useState<RealtimeProduct | null>(null);
-  const [paymentProduct, setPaymentProduct] = useState<RealtimeProduct | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<EnhancedRealtimeProduct | null>(null);
+  const [paymentProduct, setPaymentProduct] = useState<EnhancedRealtimeProduct | null>(null);
   
   if (!products || products.length === 0) return null;
 

@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { RealtimeProduct } from '@/lib/realtime-products';
+import { EnhancedRealtimeProduct } from '@/lib/realtime-products-enhanced';
 import { useAuth } from '@/contexts/auth-context';
 import { toast } from 'sonner';
 import { AuthModal } from '@/components/auth/auth-modal';
@@ -17,10 +17,10 @@ import { WishlistAPI, CartAPI } from '@/lib/database';
 import { geminiService } from '@/lib/gemini';
 
 interface ProductModalProps {
-  product: RealtimeProduct | null;
+  product: EnhancedRealtimeProduct | null;
   open: boolean;
   onClose: () => void;
-  onBuyNow: (product: RealtimeProduct) => void;
+  onBuyNow: (product: EnhancedRealtimeProduct) => void;
 }
 
 export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalProps) {

@@ -8,13 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { RealtimeProduct } from '@/lib/realtime-products';
+import { EnhancedRealtimeProduct } from '@/lib/realtime-products-enhanced';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth-context';
 import { AuthModal } from '@/components/auth/auth-modal';
 
 interface PaymentModalProps {
-  product: RealtimeProduct | null;
+  product: EnhancedRealtimeProduct | null;
   open: boolean;
   onClose: () => void;
 }
