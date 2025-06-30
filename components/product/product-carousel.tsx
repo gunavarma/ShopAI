@@ -66,7 +66,7 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
       });
     } catch (error) {
       console.error('Error adding to wishlist:', error);
-      if (error.message?.includes('already in wishlist')) {
+      if (error instanceof Error && error.message?.includes('already in wishlist')) {
         toast.error('Product already in wishlist');
       } else {
         toast.error('Failed to add to wishlist');
