@@ -173,12 +173,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               id: data.user.id,
               email: data.user.email,
               full_name: name,
-              preferences: {
+              preferences: data.user.email ? {
                 theme: 'dark',
                 notifications: true,
                 currency: 'INR',
                 language: 'en'
-              }
+              } : null
             }
           ]);
 
@@ -219,7 +219,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (updates.name) metadataUpdates.full_name = updates.name;
       if (updates.avatar) metadataUpdates.avatar_url = updates.avatar;
 
-      if (Object.keys(metadataUpdates).length > 0) {
+      if (metadataUpdates && Object.keys(metadataUpdates).length > 0) {
         const { error: authError } = await supabase.auth.updateUser({
           data: metadataUpdates
         });
@@ -235,7 +235,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (updates.avatar) profileUpdates.avatar_url = updates.avatar;
       if (updates.preferences) profileUpdates.preferences = updates.preferences;
 
-      if (Object.keys(profileUpdates).length > 0) {
+      if (profileUpdates && Object.keys(profileUpdates).length > 0) {
         const { error: profileError } = await supabase
           .from('profiles')
           .update({

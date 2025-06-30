@@ -74,7 +74,7 @@ export function UserOnboarding({ open, onClose }: UserOnboardingProps) {
     try {
       // Update user profile in database
       await ProfilesAPI.updateProfile(user.id, {
-        full_name: formData.name,
+        full_name: formData.name.trim() || user.name,
         preferences: {
           theme: formData.theme,
           notifications: formData.notifications,

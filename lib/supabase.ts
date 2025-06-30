@@ -206,7 +206,7 @@ export function transformSupabaseUser(
           supabaseUser.email?.split('@')[0] || 
           'User',
     avatar: profile?.avatar_url || supabaseUser.user_metadata?.avatar_url,
-    preferences: profile?.preferences || {
+    preferences: profile?.preferences || supabaseUser.user_metadata?.preferences || {
       theme: 'dark',
       notifications: true,
       currency: 'INR',

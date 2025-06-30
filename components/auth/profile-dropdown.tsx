@@ -45,9 +45,6 @@ export function ProfileDropdown({
   const [orderCount, setOrderCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
 
-  if (!user) return null;
-
-  // Fetch counts from database
   useEffect(() => {
     const fetchCounts = async () => {
       if (!user) return;
@@ -71,6 +68,10 @@ export function ProfileDropdown({
     
     fetchCounts();
   }, [user]);
+
+  if (!user) return null;
+
+  // Fetch counts from database
 
   const handleLogout = async () => {
     try {

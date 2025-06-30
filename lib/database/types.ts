@@ -5,12 +5,12 @@ export interface DatabaseProfile {
   email: string;
   full_name: string;
   avatar_url?: string;
-  preferences: {
+  preferences?: {
     theme: string;
     notifications: boolean;
     currency: string;
     language: string;
-  };
+  } | null;
   created_at: string;
   updated_at: string;
 }

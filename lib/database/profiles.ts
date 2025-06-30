@@ -43,12 +43,18 @@ export class ProfilesAPI {
 
   static async updateProfile(userId: string, updates: Partial<DatabaseProfile>): Promise<DatabaseProfile> {
     try {
+      // Ensure updates object is valid
+      const validUpdates: Partial<DatabaseProfile> = {};
+      if (updates.full_name) validUpdates.full_name = updates.full_name;
+      if (updates.avatar_url) validUpdates.avatar_url = updates.avatar_url;
+      if (updates.preferences) validUpdates.preferences = updates.preferences;
+      
+      // Add updated_at timestamp
+      validUpdates.updated_at = new Date().toISOString();
+      
       const { data, error } = await supabase
         .from('profiles')
-        .update({
-          ...updates,
-          updated_at: new Date().toISOString()
-        })
+        .update(validUpdates)
         .eq('id', userId)
         .select()
         .single();

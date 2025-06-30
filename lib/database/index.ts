@@ -6,6 +6,7 @@ export { OrdersAPI } from './orders';
 export { PriceAlertsAPI } from './price-alerts';
 export { ChatHistoryAPI } from './chat-history';
 export { AnalyticsAPI } from './analytics';
+export { NotificationsAPI } from './notifications';
 
 // Re-export types
 export * from './types';

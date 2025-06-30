@@ -85,7 +85,9 @@ export function AuthModal({ open, onClose, defaultMode = 'login' }: AuthModalPro
       if (mode === 'login') {
         result = await login(formData.email, formData.password);
       } else {
-        result = await register(formData.email, formData.password, formData.name);
+        // Ensure name is not empty
+        const name = formData.name.trim() || formData.email.split('@')[0];
+        result = await register(formData.email, formData.password, name);
       }
 
       if (result.success) {
