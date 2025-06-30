@@ -3,11 +3,19 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Star, TrendingUp, ShoppingCart, ExternalLink, CheckCircle, AlertCircle, Heart, Loader2 } from 'lucide-react';
+import { EnhancedRealtimeProduct } from '@/lib/realtime-products-enhanced';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { EnhancedRealtimeProduct } from '@/lib/realtime-products-enhanced';
 import { ProductModal } from '../product/product-modal';
 import { PaymentModal } from '../payment/payment-modal';
+
+const getSentimentColor = (sentiment: string): string => {
+  switch (sentiment) {
+    case 'positive': return 'text-green-500';
+    case 'negative': return 'text-red-500';
+    default: return 'text-yellow-500';
+  }
+};
 
 interface ProductCarouselProps {
   products: EnhancedRealtimeProduct[];

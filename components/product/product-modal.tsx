@@ -59,7 +59,7 @@ export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalP
 
   if (!product) return null;
 
-  const getSentimentColor = (sentiment: string) => {
+  const getSentimentColor = (sentiment: string): string => {
     switch (sentiment) {
       case 'positive': return 'text-green-500';
       case 'negative': return 'text-red-500';
@@ -175,11 +175,11 @@ export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalP
                       variant="secondary" 
                       className="text-xs bg-black/80 text-white border-none backdrop-blur-sm"
                     >
-                      {(product as any).source === 'google_shopping' ? 'Google Shopping' : 
-                       (product as any).source === 'amazon' ? 'Amazon India' : 'AI Enhanced'}
+                      {product.source === 'google_shopping' ? 'Google Shopping' : 
+                       product.source === 'amazon' ? 'Amazon India' : 'AI Enhanced'}
                     </Badge>
                     
-                    {(product as any).source !== 'ai_generated' && (
+                    {product.source !== 'ai_generated' && (
                       <div className="flex items-center gap-1 px-2 py-1 bg-green-500/90 rounded-full backdrop-blur-sm">
                         <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
                         <span className="text-xs text-white font-medium">Real-time Data</span>
@@ -510,7 +510,7 @@ export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalP
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <span className="font-medium">Data Source:</span>
-                          <p className="text-muted-foreground">{(product as any).source === 'ai_generated' ? 'Gemini AI' : 'Live Shopping Data'}</p>
+                          <p className="text-muted-foreground">{product.source === 'ai_generated' ? 'Gemini AI' : 'Live Shopping Data'}</p>
                         </div>
                         <div>
                           <span className="font-medium">Images:</span>
@@ -518,7 +518,7 @@ export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalP
                         </div>
                         <div>
                           <span className="font-medium">Last Updated:</span>
-                          <p className="text-muted-foreground">{(product as any).source === 'ai_generated' ? 'AI Generated' : 'Live Data'}</p>
+                          <p className="text-muted-foreground">{product.source === 'ai_generated' ? 'AI Generated' : 'Live Data'}</p>
                         </div>
                         <div>
                           <span className="font-medium">Related Images:</span>

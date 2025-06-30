@@ -29,6 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth-context';
 import { WishlistAPI, CartAPI } from '@/lib/database';
+import { EnhancedRealtimeProduct } from '@/lib/realtime-products-enhanced';
 
 interface BookItem {
   id: string;
@@ -49,7 +50,9 @@ interface BookItem {
   bestseller: boolean;
   newRelease: boolean;
   inStock: boolean;
-  language: string;
+  language?: string;
+  genre?: string;
+  publishYear?: number;
 }
 
 interface BooksScreenProps {
