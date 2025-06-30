@@ -78,7 +78,7 @@ export function useWishlist() {
 
   useEffect(() => {
     fetchWishlist();
-  }, [user]);
+  }, [user, fetchWishlist]);
 
   return {
     wishlist,
@@ -181,7 +181,7 @@ export function useCart() {
 
   useEffect(() => {
     fetchCart();
-  }, [user]);
+  }, [user, fetchCart]);
 
   return {
     cart,
@@ -230,7 +230,7 @@ export function useOrders() {
 
   useEffect(() => {
     fetchOrders();
-  }, [user]);
+  }, [user, fetchOrders]);
 
   return {
     orders,
@@ -294,7 +294,7 @@ export function useChatHistory() {
 
   useEffect(() => {
     fetchChats();
-  }, [user]);
+  }, [user, fetchChats]);
 
   return {
     chats,

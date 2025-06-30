@@ -35,7 +35,7 @@ export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalP
     if (product && open) {
       loadRelatedImages();
     }
-  }, [product, open]);
+  }, [product, open, loadRelatedImages]);
 
   const loadRelatedImages = async () => {
     if (!product) return;

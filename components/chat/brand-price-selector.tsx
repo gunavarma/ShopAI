@@ -38,7 +38,7 @@ export function BrandPriceSelector({ category, onSelection, onSkip }: BrandPrice
 
   useEffect(() => {
     loadDynamicData();
-  }, [category]);
+  }, [category, loadDynamicData]);
 
   const loadDynamicData = async () => {
     setIsLoadingBrands(true);

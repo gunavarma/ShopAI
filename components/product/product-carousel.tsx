@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Star, TrendingUp, ShoppingCart, ExternalLink, CheckCircle, AlertCircle, Heart, Loader2, Play } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { RealtimeProduct } from '@/lib/realtime-products';
 import { ProductModal } from '../product/product-modal';
 import { useAuth } from '@/contexts/auth-context';

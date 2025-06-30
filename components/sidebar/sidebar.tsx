@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   MessageSquare, 
   Settings, 
-  History, 
+  History,
+  Loader2,
   Plus, 
   Search,
   Trash2,
