@@ -186,7 +186,7 @@ Return only the JSON array:
     setIsLoadingBrands(false);
   };
 
-  const setFallbackPriceRanges = () => {
+  const setFallbackPriceRanges = useCallback(() => {
     const fallbackPrices: PriceRange[] = [
       { label: 'Budget', value: '0-10000', range: 'Under ₹10K', popular: true, description: 'Great value options' },
       { label: 'Mid-Range', value: '10000-25000', range: '₹10K - ₹25K', popular: true, description: 'Best features for price' },
@@ -197,7 +197,7 @@ Return only the JSON array:
     ];
     setPriceRanges(fallbackPrices);
     setIsLoadingPrices(false);
-  };
+  }, []);
 
   const handleContinue = () => {
     if (selectedBrand && selectedPrice) {
