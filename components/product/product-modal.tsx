@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Star, TrendingUp, ShoppingCart, Heart, Share2, ChevronLeft, ChevronRight, Play, User, Calendar, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -31,13 +31,7 @@ export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalP
   const [isLoadingImages, setIsLoadingImages] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (product && open) {
-      loadRelatedImages();
-    }
-  }, [product, open, loadRelatedImages]);
-
-  const loadRelatedImages = async () => {
+  const loadRelatedImages = useCallback(async () => {
     if (!product) return;
     
     setIsLoadingImages(true);
@@ -55,7 +49,13 @@ export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalP
     } finally {
       setIsLoadingImages(false);
     }
-  };
+  }, [product]);
+
+  useEffect(() => {
+    if (product && open) {
+      loadRelatedImages();
+    }
+  }, [product, open, loadRelatedImages]);
 
   if (!product) return null;
 
