@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Star, TrendingUp, ShoppingCart, ExternalLink, CheckCircle, AlertCircle, Heart, Loader2, Play } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { RealtimeProduct } from '@/lib/realtime-products';
+import { EnhancedRealtimeProduct } from '@/lib/realtime-products-enhanced';
 import { ProductModal } from '../product/product-modal';
 import { useAuth } from '@/contexts/auth-context';
 import { toast } from 'sonner';
@@ -12,14 +12,14 @@ import { PaymentModal } from '../payment/payment-modal';
 import { WishlistAPI, CartAPI } from '@/lib/database';
 
 interface ProductCarouselProps {
-  products: RealtimeProduct[];
+  products: EnhancedRealtimeProduct[];
 }
 
 export function ProductCarousel({ products }: ProductCarouselProps) {
   const { isAuthenticated, user } = useAuth();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedProduct, setSelectedProduct] = useState<RealtimeProduct | null>(null);
-  const [paymentProduct, setPaymentProduct] = useState<RealtimeProduct | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<EnhancedRealtimeProduct | null>(null);
+  const [paymentProduct, setPaymentProduct] = useState<EnhancedRealtimeProduct | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [loading, setLoading] = useState(false);
   
@@ -37,7 +37,7 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
   
   if (!products || products.length === 0) return null;
 
-  const handleBuyNow = (product: RealtimeProduct) => {
+  const handleBuyNow = (product: EnhancedRealtimeProduct) => {
     if (!isAuthenticated) {
       setShowAuthModal(true);
       return;
@@ -46,7 +46,7 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
     setPaymentProduct(product);
   };
   
-  const handleAddToWishlist = async (product: RealtimeProduct) => {
+  const handleAddToWishlist = async (product: EnhancedRealtimeProduct) => {
     if (!isAuthenticated || !user) {
       setShowAuthModal(true);
       return;
@@ -70,7 +70,7 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
         in_stock: product.inStock,
         availability: product.availability,
         alert_enabled: false,
-        source: (product as any).source || 'ai_generated'
+        source: product.source || 'ai_generated'
       });
       
       toast.success('Added to wishlist', {
@@ -88,7 +88,7 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
     }
   };
   
-  const handleAddToCart = async (product: RealtimeProduct) => {
+  const handleAddToCart = async (product: EnhancedRealtimeProduct) => {
     if (!isAuthenticated || !user) {
       setShowAuthModal(true);
       return;
@@ -110,7 +110,7 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
         category: product.category,
         rating: product.rating,
         in_stock: product.inStock,
-        source: (product as any).source || 'ai_generated'
+        source: product.source || 'ai_generated'
       });
       
       toast.success('Added to cart', {
@@ -198,7 +198,7 @@ export function ProductCarousel({ products }: ProductCarouselProps) {
                 </div>
                 
                 {/* Real-time indicator */}
-                {(product as any).source !== 'ai_generated' && (
+                {product.source !== 'ai_generated' && (
                   <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <div className="flex items-center gap-1 px-2 py-1 bg-green-500/90 rounded-full">
                       <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
