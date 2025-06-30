@@ -185,6 +185,7 @@ export interface AuthUser {
   email: string;
   name: string;
   avatar?: string;
+  createdAt: string;
   preferences?: {
     theme: string;
     notifications: boolean;
@@ -206,6 +207,7 @@ export function transformSupabaseUser(
           supabaseUser.email?.split('@')[0] || 
           'User',
     avatar: profile?.avatar_url || supabaseUser.user_metadata?.avatar_url,
+    createdAt: profile?.created_at || supabaseUser.created_at || new Date().toISOString(),
     preferences: profile?.preferences || supabaseUser.user_metadata?.preferences || {
       theme: 'dark',
       notifications: true,
