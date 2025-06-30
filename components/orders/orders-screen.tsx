@@ -474,7 +474,9 @@ export function OrdersScreen({ open, onClose }: OrdersScreenProps) {
                 <p className="text-sm text-muted-foreground mt-2">
                   {selectedOrder.status === 'delivered' && selectedOrder.actualDelivery
                     ? `Delivered on ${formatDate(selectedOrder.actualDelivery)}`
-                    : `Expected delivery: ${formatDate(selectedOrder.estimatedDelivery)}`
+                    : selectedOrder.estimatedDelivery 
+                      ? `Expected delivery: ${formatDate(selectedOrder.estimatedDelivery)}`
+                      : 'Expected delivery: Not available'
                   }
                 </p>
               </div>
