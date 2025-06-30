@@ -14,7 +14,6 @@ interface ProtectedRouteProps {
   fallback?: React.ReactNode;
   requireAuth?: boolean;
   message?: string;
-  requireAuth?: boolean;
 }
 
 export function ProtectedRoute({ 
