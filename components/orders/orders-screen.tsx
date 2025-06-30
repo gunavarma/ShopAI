@@ -91,7 +91,7 @@ export function OrdersScreen({ open, onClose }: OrdersScreenProps) {
   // Fetch orders from database
   useEffect(() => {
     const fetchOrders = async () => {
-      if (!isAuthenticated) {
+      if (!isAuthenticated || !user) {
         setOrders([]);
         setLoading(false);
         return;
