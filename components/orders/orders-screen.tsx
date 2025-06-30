@@ -102,11 +102,11 @@ export function OrdersScreen({ open, onClose }: OrdersScreenProps) {
         const userOrders = await OrdersAPI.getOrders(user.id);
         
         // Transform database orders to component format
-        const transformedOrders = userOrders.map(dbOrder => {
+        const transformedOrders: Order[] = userOrders.map(dbOrder => {
           return {
             id: dbOrder.id,
             orderNumber: dbOrder.order_number,
-            status: dbOrder.status as any,
+            status: dbOrder.status as Order['status'],
             items: dbOrder.order_items.map(item => ({
               id: item.id,
               name: item.product_name,
@@ -115,15 +115,15 @@ export function OrdersScreen({ open, onClose }: OrdersScreenProps) {
               quantity: item.quantity,
               image: item.product_image,
               category: item.category
-            })),
+            })) as OrderItem[],
             totalAmount: dbOrder.total_amount,
             orderDate: dbOrder.created_at,
             estimatedDelivery: dbOrder.estimated_delivery,
             actualDelivery: dbOrder.actual_delivery,
-            shippingAddress: dbOrder.shipping_address as any,
+            shippingAddress: dbOrder.shipping_address as Order['shippingAddress'],
             trackingNumber: dbOrder.tracking_number,
             paymentMethod: dbOrder.payment_method,
-            paymentStatus: dbOrder.payment_status as any,
+            paymentStatus: dbOrder.payment_status as Order['paymentStatus'],
             timeline: [
               {
                 status: 'Order Placed',
