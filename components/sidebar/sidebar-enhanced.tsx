@@ -387,26 +387,6 @@ export function SidebarEnhanced({
                   variant="ghost"
                   size="sm"
                   className="w-full justify-start"
-                  onClick={onCartClick}
-                >
-                  <ShoppingCart className="w-4 h-4 mr-2" />
-                  Shopping Cart
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start"
-                  onClick={onOrdersClick}
-                >
-                  <Package className="w-4 h-4 mr-2" />
-                  My Orders
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start"
                   onClick={onSettingsClick}
                 >
                   <Settings className="w-4 h-4 mr-2" />

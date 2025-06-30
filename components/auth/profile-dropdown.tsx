@@ -42,9 +42,6 @@ export function ProfileDropdown({
   const { user, logout } = useAuth();
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
-  const [orderCount, setOrderCount] = useState(0);
-  const [isOpen, setIsOpen] = useState(false);
-
   useEffect(() => {
     const fetchCounts = async () => {
       if (!user) return;
@@ -68,6 +65,8 @@ export function ProfileDropdown({
     
     fetchCounts();
   }, [user]);
+
+  if (!user) return null;
 
   if (!user) return null;
 

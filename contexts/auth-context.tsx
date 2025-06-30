@@ -137,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Don't set loading to false here - let the auth state change handler do it
       return { success: true };
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Login error:', error instanceof Error ? error.message : error);
       setIsLoading(false);
       return { success: false, error: 'Login failed' };
     }
@@ -150,7 +150,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         password,
         options: {
-          emailRedirectTo: undefined,
           data: {
             full_name: name,
           },
