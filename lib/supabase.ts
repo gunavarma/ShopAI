@@ -191,6 +191,14 @@ export interface AuthUser {
     notifications: boolean;
     currency: string;
     language: string;
+    interests?: string[];
+    personal?: {
+      phone: string;
+      city: string;
+      pincode: string;
+      birthdate: string;
+      gender: string;
+    };
   };
 }
 

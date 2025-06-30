@@ -10,6 +10,14 @@ export interface DatabaseProfile {
     notifications: boolean;
     currency: string;
     language: string;
+    interests?: string[];
+    personal?: {
+      phone: string;
+      city: string;
+      pincode: string;
+      birthdate: string;
+      gender: string;
+    };
   } | null;
   created_at: string;
   updated_at: string;
