@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Check, Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -36,28 +36,8 @@ export function BrandPriceSelector({ category, onSelection, onSkip }: BrandPrice
   const [isLoadingBrands, setIsLoadingBrands] = useState(true);
   const [isLoadingPrices, setIsLoadingPrices] = useState(true);
 
-  useEffect(() => {
-    loadDynamicData();
-  }, [category, loadDynamicData]);
-
-  const loadDynamicData = async () => {
-    setIsLoadingBrands(true);
-    setIsLoadingPrices(true);
-    
-    try {
-      // Load brands and price ranges in parallel
-      await Promise.all([
-        loadBrandsFromGemini(),
-        loadPriceRangesFromGemini()
-      ]);
-    } catch (error) {
-      console.error('Error loading dynamic data:', error);
-      // Set fallback data
-      setFallbackData();
-    }
-  };
-
-  const loadBrandsFromGemini = async () => {
+  // Memoize functions to avoid dependency issues
+  const loadBrandsFromGemini = useCallback(async () => {
     try {
       const prompt = `
 Generate 6-8 popular brands for "${category}" products in the Indian market.
@@ -110,9 +90,9 @@ Return only the JSON array:
     } finally {
       setIsLoadingBrands(false);
     }
-  };
+  }, [category]);
 
-  const loadPriceRangesFromGemini = async () => {
+  const loadPriceRangesFromGemini = useCallback(async () => {
     try {
       const prompt = `
 Generate 6 price ranges for "${category}" products in the Indian market with current 2024 pricing.
@@ -165,11 +145,32 @@ Return only the JSON array:
     } finally {
       setIsLoadingPrices(false);
     }
-  };
+  }, [category]);
 
-  const setFallbackData = () => {
+  const setFallbackData = useCallback(() => {
     setFallbackBrands();
     setFallbackPriceRanges();
+  }, []);
+
+  useEffect(() => {
+    loadDynamicData();
+  }, [category, loadDynamicData, loadBrandsFromGemini, loadPriceRangesFromGemini, setFallbackData]);
+
+  const loadDynamicData = async () => {
+    setIsLoadingBrands(true);
+    setIsLoadingPrices(true);
+    
+    try {
+      // Load brands and price ranges in parallel
+      await Promise.all([
+        loadBrandsFromGemini(),
+        loadPriceRangesFromGemini()
+      ]);
+    } catch (error) {
+      console.error('Error loading dynamic data:', error);
+      // Set fallback data
+      setFallbackData();
+    }
   };
 
   const setFallbackBrands = () => {

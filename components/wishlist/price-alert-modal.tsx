@@ -186,7 +186,7 @@ export function PriceAlertModal({ open, onClose, item, onSave }: PriceAlertModal
                 <span className="font-medium">Potential Savings</span>
               </div>
               <p className="text-sm text-green-600 dark:text-green-300 mt-1">
-                You'll save ₹{(item.currentPrice - getEstimatedPrice()).toLocaleString()} 
+                You&apos;ll save ₹{(item.currentPrice - getEstimatedPrice()).toLocaleString()} 
                 ({(((item.currentPrice - getEstimatedPrice()) / item.currentPrice) * 100).toFixed(1)}% off)
               </p>
             </motion.div>
