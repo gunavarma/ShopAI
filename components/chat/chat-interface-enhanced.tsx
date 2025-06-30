@@ -505,9 +505,7 @@ export function ChatInterfaceEnhanced() {
             exit={{ opacity: 0, x: -20 }}
             className="fixed top-4 left-4 z-40 hidden lg:flex items-center gap-2"
           >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-purple-400 flex items-center justify-center">
-              <ShoppingBag className="w-4 h-4 text-white" />
-            </div>
+            <img src="/infinity.png" alt="ShopWhiz Logo" className="w-8 h-8" />
             <span className="font-semibold gradient-text">ShopWhiz</span>
           </motion.div>
         )}
