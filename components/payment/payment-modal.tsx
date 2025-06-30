@@ -5,7 +5,9 @@ import { motion } from 'framer-motion';
 import { CreditCard, Lock, CheckCircle, ShoppingBag } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { EnhancedRealtimeProduct } from '@/lib/realtime-products-enhanced';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { EnhancedRealtimeProduct } from '@/lib/realtime-products-enhanced';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth-context';
@@ -18,7 +20,7 @@ interface PaymentModalProps {
 }
 
 export function PaymentModal({ product, open, onClose }: PaymentModalProps) {
-  product: EnhancedRealtimeProduct | null;
+  const { isAuthenticated } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
