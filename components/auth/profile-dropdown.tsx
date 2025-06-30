@@ -37,7 +37,6 @@ interface ProfileDropdownProps {
 
 export function ProfileDropdown({ 
   onSettingsClick, 
-  onCartClick,
   onCartClick, 
   onOrdersClick 
 }: ProfileDropdownProps) {
