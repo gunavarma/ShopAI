@@ -41,7 +41,6 @@ interface BookItem {
   rating: number;
   reviewCount: number;
   category: string;
-  genre: string;
   pages: number;
   publishYear: number;
   publisher: string;
@@ -51,6 +50,7 @@ interface BookItem {
   newRelease: boolean;
   inStock: boolean;
   language?: string;
+  genre: string;
   genre?: string;
   publishYear?: number;
 }
