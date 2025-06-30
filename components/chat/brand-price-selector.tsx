@@ -152,11 +152,7 @@ Return only the JSON array:
     setFallbackPriceRanges();
   }, []);
 
-  useEffect(() => {
-    loadDynamicData();
-  }, [category, loadDynamicData, loadBrandsFromGemini, loadPriceRangesFromGemini, setFallbackData]);
-
-  const loadDynamicData = async () => {
+  const loadDynamicData = useCallback(async () => {
     setIsLoadingBrands(true);
     setIsLoadingPrices(true);
     
@@ -171,7 +167,11 @@ Return only the JSON array:
       // Set fallback data
       setFallbackData();
     }
-  };
+  }, [loadBrandsFromGemini, loadPriceRangesFromGemini, setFallbackData]);
+
+  useEffect(() => {
+    loadDynamicData();
+  }, [category, loadDynamicData, loadBrandsFromGemini, loadPriceRangesFromGemini, setFallbackData]);
 
   const setFallbackBrands = () => {
     const fallbackBrands: BrandOption[] = [
