@@ -10,6 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { RealtimeProduct } from '@/lib/realtime-products';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/auth-context';
+import { AuthModal } from '@/components/auth/auth-modal';
 
 interface PaymentModalProps {
   product: RealtimeProduct | null;
@@ -18,8 +20,10 @@ interface PaymentModalProps {
 }
 
 export function PaymentModal({ product, open, onClose }: PaymentModalProps) {
+  const { isAuthenticated } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     cardNumber: '',
@@ -38,6 +42,11 @@ export function PaymentModal({ product, open, onClose }: PaymentModalProps) {
   };
 
   const handlePayment = async () => {
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+    
     setIsProcessing(true);
     
     // Simulate payment processing
@@ -122,6 +131,7 @@ export function PaymentModal({ product, open, onClose }: PaymentModalProps) {
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-6xl p-0 overflow-hidden bg-background border-border/50">
         <DialogHeader>
@@ -365,5 +375,12 @@ export function PaymentModal({ product, open, onClose }: PaymentModalProps) {
         </div>
       </DialogContent>
     </Dialog>
+    
+    <AuthModal
+      open={showAuthModal}
+      onClose={() => setShowAuthModal(false)}
+      defaultMode="login"
+    />
+    </>
   );
 }

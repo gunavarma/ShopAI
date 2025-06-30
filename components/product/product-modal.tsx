@@ -10,6 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { RealtimeProduct } from '@/lib/realtime-products';
+import { useAuth } from '@/contexts/auth-context';
+import { toast } from 'sonner';
+import { AuthModal } from '@/components/auth/auth-modal';
 import { geminiService } from '@/lib/gemini';
 
 interface ProductModalProps {
@@ -20,6 +23,8 @@ interface ProductModalProps {
 }
 
 export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalProps) {
+  const { isAuthenticated } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [relatedImages, setRelatedImages] = useState<string[]>([]);
   const [isLoadingImages, setIsLoadingImages] = useState(false);
@@ -78,7 +83,30 @@ export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalP
 
   const currentImage = relatedImages[selectedImageIndex] || product.image;
 
+  const handleBuyNow = () => {
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+    
+    if (product) {
+      onBuyNow(product);
+    }
+  };
+  
+  const handleAddToWishlist = () => {
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      return;
+    }
+    
+    toast.success('Added to wishlist', {
+      description: `${product?.name} has been added to your wishlist`
+    });
+  };
+
   return (
+    <>
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="glass-card border-primary/30 max-w-6xl max-h-[90vh] p-0 overflow-hidden">
         <DialogHeader>
@@ -122,8 +150,8 @@ export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalP
                 
                 {/* Source and Live indicators */}
                 <div className="absolute top-3 left-3 flex flex-col gap-2">
-                  <Badge 
-                    variant="secondary" 
+                    className="flex-1 neon-glow" 
+                    onClick={handleBuyNow}
                     className="text-xs bg-black/80 text-white border-none backdrop-blur-sm"
                   >
                     {(product as any).source === 'google_shopping' ? 'Google Shopping' : 
@@ -244,7 +272,11 @@ export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalP
                   <Button variant="outline" size="sm">
                     <Heart className="w-4 h-4" />
                   </Button>
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="lg"
+                    onClick={handleAddToWishlist}
+                  >
                     <Share2 className="w-4 h-4" />
                   </Button>
                 </div>
@@ -472,5 +504,12 @@ export function ProductModal({ product, open, onClose, onBuyNow }: ProductModalP
         </ScrollArea>
       </DialogContent>
     </Dialog>
+    
+    <AuthModal
+      open={showAuthModal}
+      onClose={() => setShowAuthModal(false)}
+      defaultMode="login"
+    />
+    </>
   );
 }

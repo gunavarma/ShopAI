@@ -28,6 +28,7 @@ import { ProfileDropdown } from '../auth/profile-dropdown';
 import { useRealtimeChat } from '@/lib/hooks/use-realtime-chat';
 import { useRealtimeAnalytics } from '@/lib/hooks/use-realtime-analytics';
 import { toast } from 'sonner';
+import { UserOnboarding } from '../onboarding/user-onboarding';
 
 // Add missing Loader2 icon import
 import { Loader2 } from 'lucide-react';
@@ -70,6 +71,7 @@ export function ChatInterfaceEnhanced() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dataSource, setDataSource] = useState<'real_time' | 'ai_generated' | 'mixed'>('ai_generated');
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -113,6 +115,22 @@ export function ChatInterfaceEnhanced() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Show onboarding for new users
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      // Check if user has completed onboarding
+      const hasCompletedOnboarding = localStorage.getItem(`onboarding-completed-${user.id}`);
+      if (!hasCompletedOnboarding) {
+        // Show onboarding after a short delay
+        const timer = setTimeout(() => {
+          setShowOnboarding(true);
+        }, 1000);
+        
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [isAuthenticated, user]);
 
   // Check API configuration
   useEffect(() => {
@@ -774,6 +792,16 @@ export function ChatInterfaceEnhanced() {
         open={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         defaultMode="login"
+      />
+      
+      <UserOnboarding
+        open={showOnboarding}
+        onClose={() => {
+          setShowOnboarding(false);
+          if (user) {
+            localStorage.setItem(`onboarding-completed-${user.id}`, 'true');
+          }
+        }}
       />
     </div>
   );

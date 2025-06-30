@@ -7,9 +7,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/auth-context';
 import { toast } from 'sonner';
+import { UserOnboarding } from '../onboarding/user-onboarding';
 
 interface AuthModalProps {
   open: boolean;
@@ -21,6 +23,7 @@ export function AuthModal({ open, onClose, defaultMode = 'login' }: AuthModalPro
   const [mode, setMode] = useState<'login' | 'register'>(defaultMode);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -87,23 +90,29 @@ export function AuthModal({ open, onClose, defaultMode = 'login' }: AuthModalPro
 
       if (result.success) {
         toast.success(
-          mode === 'login' ? 'Welcome back!' : 'Account created successfully!',
+          mode === 'login' ? 'Welcome back!' : 'Account created successfully',
           {
             description: mode === 'login' 
               ? 'You have been logged in successfully.' 
-              : mode === 'register' 
-                ? 'Please check your email to verify your account.'
-                : 'Your account has been created and you are now logged in.'
+              : 'Your account has been created and you are now logged in.'
           }
         );
-        
-        // Wait a bit for auth state to update, then close modal
-        setTimeout(() => {
-          onClose();
-          // Reset form
-          setFormData({ email: '', password: '', name: '', confirmPassword: '' });
-          setIsLoading(false);
-        }, 1000);
+
+        // Show onboarding for new users
+        if (mode === 'register') {
+          setTimeout(() => {
+            setShowOnboarding(true);
+            setIsLoading(false);
+          }, 1000);
+        } else {
+          // Just close modal for login
+          setTimeout(() => {
+            onClose();
+            // Reset form
+            setFormData({ email: '', password: '', name: '', confirmPassword: '' });
+            setIsLoading(false);
+          }, 1000);
+        }
       } else {
         toast.error(result.error || `${mode === 'login' ? 'Login' : 'Registration'} failed`);
         setIsLoading(false);
@@ -122,7 +131,15 @@ export function AuthModal({ open, onClose, defaultMode = 'login' }: AuthModalPro
     setFormData({ email: '', password: '', name: '', confirmPassword: '' });
   };
 
+  const handleOnboardingClose = () => {
+    setShowOnboarding(false);
+    onClose();
+    // Reset form
+    setFormData({ email: '', password: '', name: '', confirmPassword: '' });
+  };
+
   return (
+    <>
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="glass-card border-primary/30 max-w-md p-0 overflow-hidden">
         <DialogHeader className="p-6 pb-0">
@@ -338,5 +355,11 @@ export function AuthModal({ open, onClose, defaultMode = 'login' }: AuthModalPro
         </div>
       </DialogContent>
     </Dialog>
+    
+    <UserOnboarding 
+      open={showOnboarding} 
+      onClose={handleOnboardingClose} 
+    />
+    </>
   );
 }

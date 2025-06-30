@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Lock, User, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { useAuth } from '@/contexts/auth-context';
 import { AuthModal } from './auth-modal';
 import { useState } from 'react';
@@ -12,12 +13,15 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
   fallback?: React.ReactNode;
   requireAuth?: boolean;
+  message?: string;
+  requireAuth?: boolean;
 }
 
 export function ProtectedRoute({ 
   children, 
   fallback, 
-  requireAuth = true 
+  requireAuth = true,
+  message = 'Please sign in to access this feature and enjoy personalized shopping experience.'
 }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -51,7 +55,7 @@ export function ProtectedRoute({
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 20 }}
             className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6"
           >
             <Lock className="w-8 h-8 text-primary" />
@@ -59,7 +63,7 @@ export function ProtectedRoute({
 
           <h2 className="text-2xl font-semibold mb-2">Authentication Required</h2>
           <p className="text-muted-foreground mb-6 max-w-md">
-            Please sign in to access this feature and enjoy personalized shopping experience.
+            {message}
           </p>
 
           <div className="flex gap-3">
@@ -81,7 +85,7 @@ export function ProtectedRoute({
           >
             <div className="flex items-center gap-2 mb-3">
               <ShoppingBag className="w-5 h-5 text-primary" />
-              <h3 className="font-medium">Why sign in?</h3>
+              <h3 className="font-medium">Benefits of signing in:</h3>
             </div>
             <ul className="text-sm text-muted-foreground space-y-2 text-left">
               <li>• Save your favorite products and searches</li>
@@ -89,6 +93,7 @@ export function ProtectedRoute({
               <li>• Get personalized recommendations</li>
               <li>• Access exclusive deals and offers</li>
               <li>• Sync your cart across devices</li>
+              <li>• Track your orders and delivery status</li>
             </ul>
           </motion.div>
         </motion.div>
