@@ -54,7 +54,7 @@ interface Order {
   items: OrderItem[];
   totalAmount: number;
   orderDate: string;
-  estimatedDelivery: string;
+  estimatedDelivery?: string;
   actualDelivery?: string;
   shippingAddress: {
     name: string;
