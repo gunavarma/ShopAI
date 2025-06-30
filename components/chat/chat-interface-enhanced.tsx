@@ -462,23 +462,11 @@ export function ChatInterfaceEnhanced() {
   const getDataSourceInfo = () => {
     switch (dataSource) {
       case 'real_time':
-        return {
-          icon: <Wifi className="w-4 h-4 text-green-500" />,
-          text: 'Live data from Google Shopping & Amazon',
-          color: 'text-green-600'
-        };
+        return { text: 'Live data from Google Shopping & Amazon' };
       case 'mixed':
-        return {
-          icon: <Zap className="w-4 h-4 text-blue-500" />,
-          text: 'Real-time + AI recommendations',
-          color: 'text-blue-600'
-        };
+        return { text: 'Real-time + AI recommendations' };
       default:
-        return {
-          icon: <Sparkles className="w-4 h-4 text-purple-500" />,
-          text: 'AI-powered recommendations',
-          color: 'text-purple-600'
-        };
+        return { text: 'AI-powered recommendations' };
     }
   };
 
@@ -581,13 +569,13 @@ export function ChatInterfaceEnhanced() {
           {/* Data Source Indicator and Chat Info */}
           <div className="flex items-center gap-4">
             {realtimeProducts.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.8 }} 
                 animate={{ opacity: 1, scale: 1 }}
-                className="flex items-center gap-2 px-3 py-1 bg-muted/30 rounded-full"
-              >
-                {getDataSourceInfo().icon}
-                <span className={`text-xs font-medium ${getDataSourceInfo().color}`}>
+                className="flex items-center gap-2 px-3 py-1.5 bg-green-950/20 dark:bg-green-900/30 backdrop-blur-sm border border-green-500/20 rounded-full shadow-sm"
+              > 
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-xs font-medium text-green-600 dark:text-green-400">
                   {getDataSourceInfo().text}
                 </span>
               </motion.div>
