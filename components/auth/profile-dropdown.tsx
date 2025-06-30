@@ -41,6 +41,7 @@ export function ProfileDropdown({
   onOrdersClick 
 }: ProfileDropdownProps) {
   const { user, logout } = useAuth();
+  const [isOpen, setIsOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
   const [orderCount, setOrderCount] = useState(0);
