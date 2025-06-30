@@ -83,6 +83,7 @@ export interface Order {
   tracking_number?: string;
   estimated_delivery?: string;
   actual_delivery?: string;
+  order_items: OrderItem[];
   created_at: string;
   updated_at: string;
 }
