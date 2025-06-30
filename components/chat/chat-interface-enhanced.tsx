@@ -63,7 +63,6 @@ export function ChatInterfaceEnhanced() {
   const [showSettings, setShowSettings] = useState(false);
   const [showCart, setShowCart] = useState(false);
   const [showWishlist, setShowWishlist] = useState(false);
-  const [showBooks, setShowBooks] = useState(false);
   const [showOrders, setShowOrders] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [realtimeProducts, setRealtimeProducts] = useState<EnhancedRealtimeProduct[]>([]);
@@ -481,7 +480,6 @@ export function ChatInterfaceEnhanced() {
         onSettingsClick={() => setShowSettings(true)}
         onCartClick={() => setShowCart(true)}
         onWishlistClick={() => setShowWishlist(true)}
-        onBooksClick={() => setShowBooks(true)}
         onOrdersClick={() => setShowOrders(true)}
         currentChatId={currentChat?.id}
         chats={chats}
@@ -764,11 +762,6 @@ export function ChatInterfaceEnhanced() {
       <WishlistScreen
         open={showWishlist}
         onClose={() => setShowWishlist(false)}
-      />
-
-      <BooksScreen
-        open={showBooks}
-        onClose={() => setShowBooks(false)}
       />
 
       <OrdersScreen

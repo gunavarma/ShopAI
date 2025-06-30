@@ -30,7 +30,6 @@ import { CartAPI, WishlistAPI, OrdersAPI } from '@/lib/database';
 
 interface ProfileDropdownProps {
   onSettingsClick?: () => void;
-  onCartClick?: () => void;
   onWishlistClick?: () => void;
   onOrdersClick?: () => void;
 }
@@ -38,7 +37,6 @@ interface ProfileDropdownProps {
 export function ProfileDropdown({ 
   onSettingsClick, 
   onCartClick, 
-  onWishlistClick, 
   onOrdersClick 
 }: ProfileDropdownProps) {
   const { user, logout } = useAuth();

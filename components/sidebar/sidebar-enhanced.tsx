@@ -17,14 +17,14 @@ import {
   ShoppingBag,
   ShoppingCart,
   Heart,
-  Book,
   Package,
   ChevronLeft,
   ChevronRight,
   User,
   Loader2,
-  Calendar,
-  Clock
+  Calendar, 
+  Clock,
+  ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,7 +54,6 @@ interface SidebarEnhancedProps {
   onSettingsClick: () => void;
   onCartClick: () => void;
   onWishlistClick: () => void;
-  onBooksClick: () => void;
   onOrdersClick: () => void;
   currentChatId?: string;
   chats?: ChatHistory[];
@@ -69,7 +68,6 @@ export function SidebarEnhanced({
   onSettingsClick,
   onCartClick,
   onWishlistClick,
-  onBooksClick,
   onOrdersClick,
   currentChatId,
   chats = [],
@@ -379,22 +377,12 @@ export function SidebarEnhanced({
                   variant="ghost"
                   size="sm"
                   className="w-full justify-start"
-                  onClick={onBooksClick}
-                >
-                  <Book className="w-4 h-4 mr-2" />
-                  Books & Literature
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start"
                   onClick={onWishlistClick}
                 >
                   <Heart className="w-4 h-4 mr-2" />
                   Wishlist & Alerts
                 </Button>
-                
+
                 <Button
                   variant="ghost"
                   size="sm"
@@ -403,6 +391,36 @@ export function SidebarEnhanced({
                 >
                   <ShoppingCart className="w-4 h-4 mr-2" />
                   Shopping Cart
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start"
+                  onClick={onOrdersClick}
+                >
+                  <Package className="w-4 h-4 mr-2" />
+                  My Orders
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start"
+                  onClick={() => window.open('https://www.amazon.in', '_blank')}
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Compare on Amazon
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start"
+                  onClick={() => window.open('https://www.flipkart.com', '_blank')}
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Compare on Flipkart
                 </Button>
                 
                 <Button
