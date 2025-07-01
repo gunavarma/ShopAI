@@ -11,18 +11,19 @@ import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/auth-context';
 import { toast } from 'sonner';
+import { UserOnboarding } from '../onboarding/user-onboarding';
 
 interface AuthModalProps {
   open: boolean;
   onClose: () => void;
   defaultMode?: 'login' | 'register';
-  onRegistrationSuccess?: () => void;
 }
 
-export function AuthModal({ open, onClose, defaultMode = 'login', onRegistrationSuccess }: AuthModalProps) {
+export function AuthModal({ open, onClose, defaultMode = 'login' }: AuthModalProps) {
   const [mode, setMode] = useState<'login' | 'register'>(defaultMode);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -99,27 +100,30 @@ export function AuthModal({ open, onClose, defaultMode = 'login', onRegistration
           }
         );
 
-        // Reset form
-        setFormData({ email: '', password: '', name: '', confirmPassword: '' });
-        setErrors({});
-        
-        // Close modal
-        onClose();
-        
-        // Trigger onboarding for new users
-        if (mode === 'register' && onRegistrationSuccess) {
-          // Small delay to ensure auth state is updated
+        // Show onboarding for new users
+        if (mode === 'register') {
           setTimeout(() => {
-            onRegistrationSuccess();
-          }, 500);
+            setShowOnboarding(true);
+            setIsLoading(false);
+          }, 1000);
+        } else {
+          // Just close modal for login
+          setTimeout(() => {
+            onClose();
+            // Reset form
+            setFormData({ email: '', password: '', name: '', confirmPassword: '' });
+            setIsLoading(false);
+          }, 1000);
         }
       } else {
         toast.error(result.error || `${mode === 'login' ? 'Login' : 'Registration'} failed`);
+        setIsLoading(false);
       }
     } catch (error) {
       toast.error('An unexpected error occurred');
-    } finally {
       setIsLoading(false);
+    } finally {
+      // Don't set loading to false here - let the success/error handlers do it
     }
   };
 
@@ -129,7 +133,15 @@ export function AuthModal({ open, onClose, defaultMode = 'login', onRegistration
     setFormData({ email: '', password: '', name: '', confirmPassword: '' });
   };
 
+  const handleOnboardingClose = () => {
+    setShowOnboarding(false);
+    onClose();
+    // Reset form
+    setFormData({ email: '', password: '', name: '', confirmPassword: '' });
+  };
+
   return (
+    <>
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="glass-card border-primary/30 max-w-md p-0 overflow-hidden">
         <DialogHeader className="p-6 pb-0">
@@ -345,5 +357,11 @@ export function AuthModal({ open, onClose, defaultMode = 'login', onRegistration
         </div>
       </DialogContent>
     </Dialog>
+    
+    <UserOnboarding 
+      open={showOnboarding} 
+      onClose={handleOnboardingClose} 
+    />
+    </>
   );
 }

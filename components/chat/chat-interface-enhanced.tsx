@@ -34,7 +34,7 @@ import { UserOnboarding } from '../onboarding/user-onboarding';
 import { Loader2 } from 'lucide-react';
 
 export function ChatInterfaceEnhanced() {
-  const { isAuthenticated, user, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const {
     chats,
     currentChat,
@@ -115,13 +115,21 @@ export function ChatInterfaceEnhanced() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Handle onboarding for new users - only show after successful registration
-  const handleRegistrationSuccess = () => {
-    // Small delay to ensure auth state is fully updated
-    setTimeout(() => {
-      setShowOnboarding(true);
-    }, 1000);
-  };
+  // Show onboarding for new users
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      // Check if user has completed onboarding
+      const hasCompletedOnboarding = localStorage.getItem(`onboarding-completed-${user.id}`);
+      if (!hasCompletedOnboarding) {
+        // Show onboarding after a short delay
+        const timer = setTimeout(() => {
+          setShowOnboarding(true);
+        }, 1000);
+        
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [isAuthenticated, user]);
 
   // Check API configuration
   useEffect(() => {
@@ -461,19 +469,6 @@ export function ChatInterfaceEnhanced() {
     }
   };
 
-  // Show loading screen while auth is loading
-  if (authLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full"
-        />
-      </div>
-    );
-  }
-
   return (
     <div className="flex h-screen relative">
       {/* Sidebar */}
@@ -779,7 +774,6 @@ export function ChatInterfaceEnhanced() {
         open={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         defaultMode="login"
-        onRegistrationSuccess={handleRegistrationSuccess}
       />
       
       <UserOnboarding
