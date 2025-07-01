@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, Phone, MapPin, Calendar, Check, ArrowRight, Sparkles } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Calendar, Check, ArrowRight, Sparkles, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -102,11 +102,16 @@ export function UserOnboarding({ open, onClose }: UserOnboardingProps) {
         }
       });
       
-      toast.success('Profile updated successfully!');
+      toast.success('Welcome to ShopWhiz!', {
+        description: 'Your profile has been set up successfully.'
+      });
+      
       onClose();
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast.error('Failed to update profile');
+      toast.error('Failed to save profile', {
+        description: 'Please try again or skip for now.'
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -142,7 +147,7 @@ export function UserOnboarding({ open, onClose }: UserOnboardingProps) {
             {[1, 2, 3].map((stepNumber) => (
               <div key={stepNumber} className="flex flex-col items-center">
                 <div 
-                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
                     step >= stepNumber 
                       ? 'bg-primary text-primary-foreground' 
                       : 'bg-muted text-muted-foreground'
@@ -387,6 +392,7 @@ export function UserOnboarding({ open, onClose }: UserOnboardingProps) {
             <Button
               variant="outline"
               onClick={step === 1 ? onClose : handleBack}
+              disabled={isSubmitting}
             >
               {step === 1 ? 'Skip' : 'Back'}
             </Button>
@@ -398,13 +404,7 @@ export function UserOnboarding({ open, onClose }: UserOnboardingProps) {
             >
               {isSubmitting ? (
                 <>
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    className="mr-2"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                  </motion.div>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Saving...
                 </>
               ) : step < 3 ? (

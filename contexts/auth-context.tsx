@@ -23,18 +23,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAuthenticated = !!user;
 
   useEffect(() => {
+    let mounted = true;
+
     // Get initial session
     const getInitialSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting initial session:', error);
+          if (mounted) {
+            setUser(null);
+            setIsLoading(false);
+          }
+          return;
+        }
+
+        if (session?.user && mounted) {
           await loadUserProfile(session.user);
+        } else if (mounted) {
+          setUser(null);
+          setIsLoading(false);
         }
       } catch (error) {
-        console.error('Error getting initial session:', error);
-        setUser(null);
-      } finally {
-        setIsLoading(false);
+        console.error('Error in getInitialSession:', error);
+        if (mounted) {
+          setUser(null);
+          setIsLoading(false);
+        }
       }
     };
 
@@ -43,21 +59,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (session?.user) {
-          await loadUserProfile(session.user);
-        } else {
-          setUser(null);
-        }
         console.log('Auth state change:', event, session?.user?.email);
         
-        // Only set loading to false after processing the auth change
-        if (event !== 'INITIAL_SESSION') {
+        if (!mounted) return;
+
+        try {
+          if (session?.user) {
+            await loadUserProfile(session.user);
+          } else {
+            setUser(null);
+            setIsLoading(false);
+          }
+        } catch (error) {
+          console.error('Error in auth state change:', error);
+          setUser(null);
           setIsLoading(false);
         }
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const loadUserProfile = async (supabaseUser: SupabaseUser) => {
@@ -72,21 +96,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // If profile doesn't exist, create one
       if (profileError && profileError.code === 'PGRST116') {
         console.log('Profile not found, creating new profile...');
+        
+        const newProfileData = {
+          id: supabaseUser.id,
+          email: supabaseUser.email || '',
+          full_name: supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User',
+          preferences: {
+            theme: 'dark',
+            notifications: true,
+            currency: 'INR',
+            language: 'en'
+          }
+        };
+
         const { data: newProfile, error: createError } = await supabase
           .from('profiles')
-          .insert([
-            {
-              id: supabaseUser.id,
-              email: supabaseUser.email || '',
-              full_name: supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || 'User',
-              preferences: {
-                theme: 'dark',
-                notifications: true,
-                currency: 'INR',
-                language: 'en'
-              }
-            }
-          ])
+          .insert([newProfileData])
           .select()
           .single();
 
@@ -95,11 +120,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Fallback to basic user info if profile creation fails
           const authUser = transformSupabaseUser(supabaseUser);
           setUser(authUser);
+          setIsLoading(false);
           return;
         }
 
         const authUser = transformSupabaseUser(supabaseUser, newProfile);
         setUser(authUser);
+        setIsLoading(false);
         return;
       }
 
@@ -108,16 +135,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Fallback to basic user info
         const authUser = transformSupabaseUser(supabaseUser);
         setUser(authUser);
+        setIsLoading(false);
         return;
       }
 
       const authUser = transformSupabaseUser(supabaseUser, profile);
       setUser(authUser);
+      setIsLoading(false);
     } catch (error) {
       console.error('Error loading user profile:', error);
       // Fallback to basic user info
       const authUser = transformSupabaseUser(supabaseUser);
       setUser(authUser);
+      setIsLoading(false);
     }
   };
 
@@ -146,15 +176,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (email: string, password: string, name: string) => {
     try {
       setIsLoading(true);
+      
+      // Sign up the user
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: name,
-          },
-          // Disable email confirmation
-          emailRedirectTo: undefined
+          }
         }
       });
 
@@ -163,29 +193,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: error.message };
       }
 
-      // Create profile record
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert([
-            {
-              id: data.user.id,
-              email: data.user.email,
-              full_name: name,
-              preferences: data.user.email ? {
-                theme: 'dark',
-                notifications: true,
-                currency: 'INR',
-                language: 'en'
-              } : null
-            }
-          ]);
-
-        if (profileError) {
-          console.error('Error creating profile:', profileError);
-        }
+      if (!data.user) {
+        setIsLoading(false);
+        return { success: false, error: 'Registration failed - no user returned' };
       }
 
+      // The profile will be created automatically by the auth state change handler
       // Don't set loading to false here - let the auth state change handler do it
       return { success: true };
     } catch (error) {
