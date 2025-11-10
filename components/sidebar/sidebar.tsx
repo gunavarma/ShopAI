@@ -24,7 +24,8 @@ import {
   User,
   ExternalLink,
   Zap,
-  Headphones
+  Headphones,
+  BarChart3
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,8 +56,9 @@ interface SidebarProps {
   onSettingsClick: () => void;
   onCartClick: () => void;
   onWishlistClick: () => void;
- onBooksClick?: () => void;
+  onBooksClick?: () => void;
   onOrdersClick: () => void;
+  onAnalyticsClick: () => void;
   currentChatId?: string;
   chats?: ChatHistory[];
   loading?: boolean;
@@ -72,6 +74,7 @@ export function Sidebar({
   onWishlistClick,
   onBooksClick,
   onOrdersClick,
+  onAnalyticsClick,
   currentChatId,
   chats: externalChats,
   loading: externalLoading = false
@@ -197,7 +200,7 @@ export function Sidebar({
                     <div className="w-6 h-6 rounded-full bg-gradient-to-r from-primary to-purple-400 flex items-center justify-center">
                       <ShoppingBag className="w-3 h-3 text-white" />
                     </div>
-                    <h2 className="font-semibold gradient-text">ShopWhiz</h2>
+                  <h2 className="font-semibold gradient-text">ShopAI</h2>
                   </div>
                   <p className="text-xs text-muted-foreground">AI Shopping Assistant</p>
                 </div>
@@ -369,6 +372,16 @@ export function Sidebar({
                   variant="ghost"
                   size="sm"
                   className="w-full justify-start"
+                  onClick={onAnalyticsClick}
+                >
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  Analytics
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full justify-start"
                   onClick={onOrdersClick}
                 >
                   <Package className="w-4 h-4 mr-2" />
@@ -393,16 +406,6 @@ export function Sidebar({
                 >
                   <ShoppingCart className="w-4 h-4 mr-2" />
                   Shopping Cart
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full justify-start"
-                  onClick={onOrdersClick}
-                >
-                  <Package className="w-4 h-4 mr-2" />
-                  My Orders
                 </Button>
                 
                 <Button

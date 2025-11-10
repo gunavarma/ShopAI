@@ -154,4 +154,137 @@ export class AnalyticsAPI {
       throw error;
     }
   }
+
+  // New enhanced analytics methods
+  static async getTimeBasedStats(userId: string, days: number = 7): Promise<{
+    dailyViews: { date: string; count: number }[];
+    dailySearches: { date: string; count: number }[];
+    categoryTrends: { category: string; count: number }[];
+  }> {
+    try {
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+
+      // Get daily views
+      const { data: viewsData } = await supabase
+        .from('product_views')
+        .select('viewed_at, category')
+        .eq('user_id', userId)
+        .gte('viewed_at', startDate.toISOString());
+
+      // Get daily searches
+      const { data: searchesData } = await supabase
+        .from('search_history')
+        .select('created_at')
+        .eq('user_id', userId)
+        .gte('created_at', startDate.toISOString());
+
+      // Process daily views
+      const dailyViews = this.groupByDate(viewsData || [], 'viewed_at');
+      
+      // Process daily searches
+      const dailySearches = this.groupByDate(searchesData || [], 'created_at');
+
+      // Process category trends
+      const categoryTrends = this.groupByCategory(viewsData || []);
+
+      return {
+        dailyViews,
+        dailySearches,
+        categoryTrends
+      };
+    } catch (error) {
+      console.error('Error fetching time-based stats:', error);
+      throw error;
+    }
+  }
+
+  static async getProductInsights(userId: string): Promise<{
+    priceRange: { min: number; max: number; average: number };
+    topBrands: { brand: string; count: number }[];
+    categoryPerformance: { category: string; views: number; avgPrice: number }[];
+  }> {
+    try {
+      const { data: viewsData } = await supabase
+        .from('product_views')
+        .select('price, product_brand, category')
+        .eq('user_id', userId);
+
+      if (!viewsData || viewsData.length === 0) {
+        return {
+          priceRange: { min: 0, max: 0, average: 0 },
+          topBrands: [],
+          categoryPerformance: []
+        };
+      }
+
+      // Calculate price statistics
+      const prices = viewsData.map(v => v.price).filter(p => p > 0);
+      const priceRange = {
+        min: Math.min(...prices),
+        max: Math.max(...prices),
+        average: prices.reduce((a, b) => a + b, 0) / prices.length
+      };
+
+      // Get top brands
+      const brandCounts = viewsData.reduce((acc, view) => {
+        acc[view.product_brand] = (acc[view.product_brand] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
+      const topBrands = Object.entries(brandCounts)
+        .map(([brand, count]) => ({ brand, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+
+      // Get category performance
+      const categoryStats = viewsData.reduce((acc, view) => {
+        if (!acc[view.category]) {
+          acc[view.category] = { views: 0, totalPrice: 0, count: 0 };
+        }
+        acc[view.category].views += 1;
+        acc[view.category].totalPrice += view.price || 0;
+        acc[view.category].count += 1;
+        return acc;
+      }, {} as Record<string, { views: number; totalPrice: number; count: number }>);
+
+      const categoryPerformance = Object.entries(categoryStats).map(([category, stats]) => ({
+        category,
+        views: stats.views,
+        avgPrice: stats.totalPrice / stats.count
+      }));
+
+      return {
+        priceRange,
+        topBrands,
+        categoryPerformance
+      };
+    } catch (error) {
+      console.error('Error fetching product insights:', error);
+      throw error;
+    }
+  }
+
+  private static groupByDate(data: any[], dateField: string): { date: string; count: number }[] {
+    const grouped = data.reduce((acc, item) => {
+      const date = new Date(item[dateField]).toISOString().split('T')[0];
+      acc[date] = (acc[date] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return Object.entries(grouped)
+      .map(([date, count]) => ({ date, count }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  private static groupByCategory(data: any[]): { category: string; count: number }[] {
+    const grouped = data.reduce((acc, item) => {
+      acc[item.category] = (acc[item.category] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    return Object.entries(grouped)
+      .map(([category, count]) => ({ category, count }))
+      .sort((a, b) => b.count - a.count);
+  }
 }

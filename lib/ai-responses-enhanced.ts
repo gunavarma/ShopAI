@@ -22,7 +22,7 @@ export class EnhancedAIAssistant {
     // Handle greetings
     if (lowercaseQuery.includes('hello') || lowercaseQuery.includes('hi') || lowercaseQuery.includes('hey')) {
       return {
-        message: "Hello! I'm ShopWhiz, your AI shopping assistant powered by real-time data from Google Shopping and Amazon India. I can help you find any product with live prices, reviews, and availability. What are you looking for today?",
+        message: "Hi! I'm ShopAI — I can help you find products with live prices, reviews, and availability. What are you looking for today?",
         suggestedActions: ['Apple iPhone 15', 'Samsung Galaxy S24', 'MacBook Pro', 'Sony headphones', 'Nike shoes', 'Gaming laptops'],
         dataSource: 'ai_generated'
       };

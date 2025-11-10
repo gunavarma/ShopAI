@@ -18,6 +18,7 @@ import { CartScreen } from '../cart/cart-screen';
 import { WishlistScreen } from '../wishlist/wishlist-screen';
 import { BooksScreen } from '../books/books-screen';
 import { OrdersScreen } from '../orders/orders-screen';
+import { useRouter } from 'next/navigation';
 import { Message } from '@/types/chat';
 import { EnhancedAIAssistant } from '@/lib/ai-responses-enhanced';
 import { EnhancedRealtimeProduct } from '@/lib/realtime-products-enhanced';
@@ -34,6 +35,7 @@ import { UserOnboarding } from '../onboarding/user-onboarding';
 import { Loader2 } from 'lucide-react';
 
 export function ChatInterfaceEnhanced() {
+  const router = useRouter();
   const { isAuthenticated, user } = useAuth();
   const {
     chats,
@@ -50,7 +52,7 @@ export function ChatInterfaceEnhanced() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: "Hello! I'm ShopWhiz, your AI shopping assistant powered by real-time data from Google Shopping and Amazon India. I can search across ALL product categories with live prices, reviews, and availability - just like the best shopping platforms! What are you looking for today?",
+      content: "Hi! I'm ShopAI, your smart shopping assistant. Tell me what you're looking for and I'll find the best options with live prices and reviews.",
       role: 'assistant',
       timestamp: Date.now(),
       suggestedActions: ['iPhone 15 Pro Max', 'Samsung Galaxy S24', 'MacBook Pro M3', 'Sony headphones', 'Nike running shoes', 'Gaming laptops']
@@ -91,7 +93,7 @@ export function ChatInterfaceEnhanced() {
       setMessages([
         {
           id: '1',
-          content: "Hello! I'm ShopWhiz, your AI shopping assistant powered by real-time data from Google Shopping and Amazon India. I can search across ALL product categories with live prices, reviews, and availability - just like the best shopping platforms! What are you looking for today?",
+          content: "Hi! I'm ShopAI, your smart shopping assistant. Tell me what you're looking for and I'll find the best options with live prices and reviews.",
           role: 'assistant',
           timestamp: Date.now(),
           suggestedActions: ['iPhone 15 Pro Max', 'Samsung Galaxy S24', 'MacBook Pro M3', 'Sony headphones', 'Nike running shoes', 'Gaming laptops']
@@ -138,13 +140,13 @@ export function ChatInterfaceEnhanced() {
     const hasScraperKey = process.env.NEXT_PUBLIC_SCRAPER_API_KEY && 
                          process.env.NEXT_PUBLIC_SCRAPER_API_KEY !== 'your_scraper_api_key_here';
 
-    if (!hasGeminiKey) {
-      setApiError('Gemini AI key not configured. Please add your API key to .env.local');
-    } else if (!hasScraperKey) {
-      setApiError('ScraperAPI key not configured. Using AI-generated product data only.');
-    } else {
-      setApiError(null);
-    }
+    // if (!hasGeminiKey) {
+    //   setApiError('Gemini AI key not configured. Please add your API key to .env.local');
+    // } else if (!hasScraperKey) {
+    //   setApiError('ScraperAPI key not configured. Using AI-generated product data only.');
+    // } else {
+    //   setApiError(null);
+    // }
   }, []);
 
   const handleSendMessage = async (content: string) => {
@@ -482,6 +484,7 @@ export function ChatInterfaceEnhanced() {
         onWishlistClick={() => setShowWishlist(true)}
         onBooksClick={() => {}} // Add empty handler for onBooksClick
         onOrdersClick={() => setShowOrders(true)}
+        onAnalyticsClick={() => router.push('/analytics')}
         currentChatId={currentChat?.id}
         chats={chats}
         loading={chatLoading}
@@ -509,7 +512,7 @@ export function ChatInterfaceEnhanced() {
             <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-purple-400 flex items-center justify-center">
               <ShoppingBag className="w-4 h-4 text-white" />
             </div>
-            <span className="font-semibold gradient-text">ShopWhiz</span>
+            <span className="font-semibold gradient-text">ShopAI</span>
           </motion.div>
         )}
       </AnimatePresence>

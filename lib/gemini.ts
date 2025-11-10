@@ -216,7 +216,7 @@ Return only valid JSON without any markdown formatting.
     userPreferences?: any
   ): Promise<string> {
     const prompt = `
-You are ShopWhiz, an AI shopping assistant like Amazon's recommendation system. Generate a helpful, conversational response for this user query.
+You are ShopAI, an AI shopping assistant. Generate a helpful, concise response for this user query with clear, shoppable results.
 
 User Query: "${userQuery}"
 
