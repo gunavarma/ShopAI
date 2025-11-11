@@ -48,8 +48,41 @@ class ServerScraperAPIService {
   } = {}): Promise<ScrapedProduct[]> {
     try {
       const { maxResults = 20, minPrice, maxPrice, sortBy = 'relevance' } = options;
+      const serpApiKey = process.env.NEXT_PUBLIC_SERPAPI_KEY;
+      // Prefer SerpAPI for structured results if available
+      if (serpApiKey && serpApiKey !== 'your_serpapi_key') {
+        const serpUrl = new URL('https://serpapi.com/search.json');
+        serpUrl.searchParams.set('engine', 'google_shopping');
+        serpUrl.searchParams.set('q', query);
+        serpUrl.searchParams.set('gl', 'in');
+        serpUrl.searchParams.set('hl', 'en');
+        serpUrl.searchParams.set('api_key', serpApiKey);
+        const serpRes = await fetch(serpUrl.toString(), { signal: AbortSignal.timeout(20000) });
+        if (serpRes.ok) {
+          const data = await serpRes.json();
+          const results: any[] = data.shopping_results || [];
+          const mapped: ScrapedProduct[] = results.slice(0, maxResults).map((r, idx) => ({
+            id: r.product_id || `google_${Date.now()}_${idx}`,
+            title: r.title,
+            price: typeof r.price === 'number'
+              ? r.price
+              : (typeof r.extracted_price === 'number' ? r.extracted_price : 0),
+            originalPrice: typeof r.extracted_old_price === 'number' ? r.extracted_old_price : undefined,
+            currency: r.currency || 'INR',
+            rating: typeof r.rating === 'number' ? r.rating : 0,
+            reviewCount: typeof r.reviews === 'number' ? r.reviews : 0,
+            image: r.thumbnail || r.product_photos?.[0] || '',
+            url: r.product_link || r.link || r.source || 'https://shopping.google.com',
+            source: 'google_shopping',
+            brand: r.source || r.store || undefined,
+            availability: 'In Stock',
+            description: r.snippet || undefined
+          }));
+          return mapped.filter(p => p.image);
+        }
+      }
       
-      // Check if API key is available
+      // Check ScraperAPI as fallback
       if (!this.API_KEY || this.API_KEY === 'your_scraper_api_key') {
         console.log('ScraperAPI key not configured, returning mock data');
         return this.getMockGoogleShoppingData(query);
@@ -115,8 +148,40 @@ class ServerScraperAPIService {
   } = {}): Promise<ScrapedProduct[]> {
     try {
       const { maxResults = 20, minPrice, maxPrice, department } = options;
+      const rainforestKey = process.env.NEXT_PUBLIC_RAINFOREST_API_KEY;
+      // Prefer Rainforest API (Amazon) if available
+      if (rainforestKey && rainforestKey !== 'your_rainforest_key') {
+        const rfUrl = new URL('https://api.rainforestapi.com/request');
+        rfUrl.searchParams.set('api_key', rainforestKey);
+        rfUrl.searchParams.set('type', 'search');
+        rfUrl.searchParams.set('amazon_domain', 'amazon.in');
+        rfUrl.searchParams.set('search_term', query);
+        if (minPrice) rfUrl.searchParams.set('min_price', String(minPrice));
+        if (maxPrice) rfUrl.searchParams.set('max_price', String(maxPrice));
+        const rfRes = await fetch(rfUrl.toString(), { signal: AbortSignal.timeout(20000) });
+        if (rfRes.ok) {
+          const data = await rfRes.json();
+          const results: any[] = data.search_results || [];
+          const mapped: ScrapedProduct[] = results.slice(0, maxResults).map((r, idx) => ({
+            id: r.asin || `amazon_${Date.now()}_${idx}`,
+            title: r.title,
+            price: r.price?.value ?? 0,
+            originalPrice: r.price?.raw && r.price?.value ? undefined : undefined,
+            currency: r.price?.currency || 'INR',
+            rating: r.rating ?? 0,
+            reviewCount: r.ratings_total ?? 0,
+            image: r.image || r.image_url || '',
+            url: r.link || (r.asin ? `https://www.amazon.in/dp/${r.asin}` : 'https://amazon.in'),
+            source: 'amazon',
+            brand: r.brand || undefined,
+            availability: 'In Stock',
+            description: r.title
+          }));
+          return mapped.filter(p => p.image);
+        }
+      }
       
-      // Check if API key is available
+      // Fallback to ScraperAPI mock/HTML
       if (!this.API_KEY || this.API_KEY === 'your_scraper_api_key') {
         console.log('ScraperAPI key not configured, returning mock data');
         return this.getMockAmazonData(query);

@@ -10,7 +10,7 @@ import { SupabaseSetupNotice } from "@/components/auth/supabase-setup-notice";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ShopAI - AI-Powered Shopping Assistant",
+  title: "ShopWhiz - AI-Powered Shopping Assistant",
   description:
     "Find the perfect products with real-time prices, reviews, and AI recommendations.",
 };

@@ -1,6 +1,12 @@
-import { EnhancedRealtimeProduct, EnhancedRealtimeProductService } from './realtime-products-enhanced';
-import { geminiService } from './gemini';
-import { ShoppingAssistantService, ShoppingAssistantResponse } from './shopping-assistant';
+import {
+  EnhancedRealtimeProduct,
+  EnhancedRealtimeProductService,
+} from "./realtime-products-enhanced";
+import { geminiService } from "./gemini";
+import {
+  ShoppingAssistantService,
+  ShoppingAssistantResponse,
+} from "./shopping-assistant";
 
 export interface EnhancedAIResponse {
   message: string;
@@ -12,65 +18,73 @@ export interface EnhancedAIResponse {
   brandSuggestions?: string[];
   needsMoreInfo?: boolean;
   category?: string;
-  dataSource?: 'real_time' | 'ai_generated' | 'mixed';
+  dataSource?: "real_time" | "ai_generated" | "mixed";
 }
 
 export class EnhancedAIAssistant {
   static async processQuery(query: string): Promise<EnhancedAIResponse> {
     const lowercaseQuery = query.toLowerCase();
-    
+
     // Handle greetings
-    if (lowercaseQuery.includes('hello') || lowercaseQuery.includes('hi') || lowercaseQuery.includes('hey')) {
+    if (
+      lowercaseQuery.includes("hello") ||
+      lowercaseQuery.includes("hi") ||
+      lowercaseQuery.includes("hey")
+    ) {
       return {
-        message: "Hi! I'm ShopAI — I can help you find products with live prices, reviews, and availability. What are you looking for today?",
-        suggestedActions: ['Apple iPhone 15', 'Samsung Galaxy S24', 'MacBook Pro', 'Sony headphones', 'Nike shoes', 'Gaming laptops'],
-        dataSource: 'ai_generated'
+        message:
+          "Hi! I'm ShopWhiz — I can help you find products with live prices, reviews, and availability. What are you looking for today?",
+        suggestedActions: [
+          "Apple iPhone 15",
+          "Samsung Galaxy S24",
+          "MacBook Pro",
+          "Sony headphones",
+          "Nike shoes",
+          "Gaming laptops",
+        ],
+        dataSource: "ai_generated",
       };
     }
 
     try {
       // Analyze the query intent
       const intent = await this.analyzeQueryIntent(query);
-      
-      // If the query is too general, show brand/price selection
-      if (intent.needsClarification && !intent.isSpecific) {
-        const conversationalResponse = await this.generateConversationalResponse(
-          query,
-          intent.category || 'product'
-        );
 
-        return {
-          message: conversationalResponse,
-          needsMoreInfo: true,
-          category: intent.category || this.extractCategoryFromQuery(query),
-          suggestedActions: ['Browse all products', 'Help me choose', 'Show popular items'],
-          dataSource: 'ai_generated'
-        };
-      }
+      // Previously: if query was general, we prompted for brands/prices.
+      // Now: skip prompting and proceed to fetch results directly.
 
       // Search for products using enhanced service
-      console.log('Searching for products:', query);
-      const products = await EnhancedRealtimeProductService.searchProducts(query, {
-        useRealData: true,
-        maxResults: 8
-      });
+      console.log("Searching for products:", query);
+      const products = await EnhancedRealtimeProductService.searchProducts(
+        query,
+        {
+          useRealData: true,
+          maxResults: 8,
+        }
+      );
 
       let message: string;
-      let dataSource: 'real_time' | 'ai_generated' | 'mixed' = 'ai_generated';
-      
+      let dataSource: "real_time" | "ai_generated" | "mixed" = "ai_generated";
+
       if (products.length > 0) {
         // Determine data source
-        const realProducts = products.filter(p => p.source !== 'ai_generated');
-        const aiProducts = products.filter(p => p.source === 'ai_generated');
-        
+        const realProducts = products.filter(
+          (p) => p.source !== "ai_generated"
+        );
+        const aiProducts = products.filter((p) => p.source === "ai_generated");
+
         if (realProducts.length > 0 && aiProducts.length > 0) {
-          dataSource = 'mixed';
+          dataSource = "mixed";
         } else if (realProducts.length > 0) {
-          dataSource = 'real_time';
+          dataSource = "real_time";
         }
 
         // Generate contextual message
-        message = await this.generateProductMessage(query, products, dataSource);
+        message = await this.generateProductMessage(
+          query,
+          products,
+          dataSource
+        );
       } else {
         message = `I couldn't find any products matching "${query}". This might be because:
 • The specific product model isn't available
@@ -84,7 +98,7 @@ Would you like me to show you popular products in this category instead?`;
       let structuredRecommendations: ShoppingAssistantResponse | undefined;
       if (products.length > 0) {
         // Convert to compatible format for shopping assistant
-        const compatibleProducts = products.map(p => ({
+        const compatibleProducts = products.map((p) => ({
           id: p.id,
           name: p.name,
           price: p.price,
@@ -105,10 +119,14 @@ Would you like me to show you popular products in this category instead?`;
           specifications: p.specifications,
           youtubeVideoId: p.youtubeVideoId,
           reviewSummary: p.reviewSummary,
-          sampleReviews: p.sampleReviews
+          sampleReviews: p.sampleReviews,
         }));
 
-        structuredRecommendations = await ShoppingAssistantService.analyzeAndRecommend(query, compatibleProducts);
+        structuredRecommendations =
+          await ShoppingAssistantService.analyzeAndRecommend(
+            query,
+            compatibleProducts
+          );
       }
 
       return {
@@ -116,12 +134,11 @@ Would you like me to show you popular products in this category instead?`;
         products: products.slice(0, 6),
         suggestedActions: this.getSuggestedActions(products, query, intent),
         structuredRecommendations,
-        dataSource
+        dataSource,
       };
-
     } catch (error) {
-      console.error('Error processing enhanced query:', error);
-      
+      console.error("Error processing enhanced query:", error);
+
       return {
         message: `I encountered an error while searching for "${query}". This could be due to:
 • Network connectivity issues
@@ -130,8 +147,13 @@ Would you like me to show you popular products in this category instead?`;
 
 Please try again in a moment, or try a different search query.`,
         products: [],
-        suggestedActions: ['Try again', 'Show popular products', 'Help me choose', 'Browse categories'],
-        dataSource: 'ai_generated'
+        suggestedActions: [
+          "Try again",
+          "Show popular products",
+          "Help me choose",
+          "Browse categories",
+        ],
+        dataSource: "ai_generated",
       };
     }
   }
@@ -139,16 +161,16 @@ Please try again in a moment, or try a different search query.`,
   private static async generateProductMessage(
     query: string,
     products: EnhancedRealtimeProduct[],
-    dataSource: 'real_time' | 'ai_generated' | 'mixed'
+    dataSource: "real_time" | "ai_generated" | "mixed"
   ): Promise<string> {
     try {
-      const realProducts = products.filter(p => p.source !== 'ai_generated');
-      const aiProducts = products.filter(p => p.source === 'ai_generated');
+      const realProducts = products.filter((p) => p.source !== "ai_generated");
+      const aiProducts = products.filter((p) => p.source === "ai_generated");
 
-      let sourceInfo = '';
-      if (dataSource === 'real_time') {
+      let sourceInfo = "";
+      if (dataSource === "real_time") {
         sourceInfo = `I found ${products.length} live products from Google Shopping and Amazon India with current prices and availability.`;
-      } else if (dataSource === 'mixed') {
+      } else if (dataSource === "mixed") {
         sourceInfo = `I found ${realProducts.length} live products from shopping sites and ${aiProducts.length} additional recommendations.`;
       } else {
         sourceInfo = `I found ${products.length} great product recommendations for you.`;
@@ -161,7 +183,15 @@ Found: ${products.length} products
 Data Source: ${dataSource}
 
 Products found:
-${products.slice(0, 3).map(p => `- ${p.name} by ${p.brand} - ₹${p.price.toLocaleString()} (${p.rating}/5 stars)`).join('\n')}
+${products
+  .slice(0, 3)
+  .map(
+    (p) =>
+      `- ${p.name} by ${p.brand} - ₹${p.price.toLocaleString()} (${
+        p.rating
+      }/5 stars)`
+  )
+  .join("\n")}
 
 Create a response that:
 1. Acknowledges their search enthusiastically
@@ -175,7 +205,7 @@ Return only the response text:
 
       return await geminiService.generateResponse(messagePrompt);
     } catch (error) {
-      console.error('Error generating product message:', error);
+      console.error("Error generating product message:", error);
       return `Great! I found ${products.length} products for "${query}" with live pricing and availability. Here are the best options for you:`;
     }
   }
@@ -215,27 +245,30 @@ Return JSON:
 `;
 
       const response = await geminiService.generateResponse(analysisPrompt);
-      const cleanResponse = response.replace(/```json\n?|\n?```/g, '').trim();
-      
+      const cleanResponse = response.replace(/```json\n?|\n?```/g, "").trim();
+
       try {
         return JSON.parse(cleanResponse);
       } catch (parseError) {
-        return { 
-          isSpecific: false, 
-          needsClarification: true, 
-          missingInfo: ['brand', 'price'] 
+        return {
+          isSpecific: false,
+          needsClarification: true,
+          missingInfo: ["brand", "price"],
         };
       }
     } catch (error) {
-      return { 
-        isSpecific: false, 
-        needsClarification: true, 
-        missingInfo: ['brand', 'price'] 
+      return {
+        isSpecific: false,
+        needsClarification: true,
+        missingInfo: ["brand", "price"],
       };
     }
   }
 
-  private static async generateConversationalResponse(query: string, category: string): Promise<string> {
+  private static async generateConversationalResponse(
+    query: string,
+    category: string
+  ): Promise<string> {
     try {
       const responsePrompt = `
 Generate a helpful response for this general shopping query:
@@ -254,31 +287,31 @@ Return only the response text:
 
       return await geminiService.generateResponse(responsePrompt);
     } catch (error) {
-      return `I'd love to help you find the perfect ${category}! Let me show you some popular brands and price options to choose from.`;
+      return `Got it. I’ll show you the best ${category} options available right now.`;
     }
   }
 
   private static extractCategoryFromQuery(query: string): string {
     const lowercaseQuery = query.toLowerCase();
-    
+
     const categoryMap: Record<string, string> = {
-      'phone': 'smartphone',
-      'mobile': 'smartphone',
-      'iphone': 'smartphone',
-      'samsung': 'smartphone',
-      'laptop': 'laptop',
-      'computer': 'laptop',
-      'macbook': 'laptop',
-      'headphones': 'headphones',
-      'earphones': 'headphones',
-      'earbuds': 'headphones',
-      'watch': 'smartwatch',
-      'shoes': 'shoes',
-      'sneakers': 'shoes',
-      'shirt': 'clothing',
-      'tshirt': 'clothing',
-      'bag': 'bag',
-      'backpack': 'bag'
+      phone: "smartphone",
+      mobile: "smartphone",
+      iphone: "smartphone",
+      samsung: "smartphone",
+      laptop: "laptop",
+      computer: "laptop",
+      macbook: "laptop",
+      headphones: "headphones",
+      earphones: "headphones",
+      earbuds: "headphones",
+      watch: "smartwatch",
+      shoes: "shoes",
+      sneakers: "shoes",
+      shirt: "clothing",
+      tshirt: "clothing",
+      bag: "bag",
+      backpack: "bag",
     };
 
     for (const [keyword, category] of Object.entries(categoryMap)) {
@@ -287,21 +320,40 @@ Return only the response text:
       }
     }
 
-    return 'product';
+    return "product";
   }
 
-  private static getSuggestedActions(products: EnhancedRealtimeProduct[], query: string, analysis: any): string[] {
+  private static getSuggestedActions(
+    products: EnhancedRealtimeProduct[],
+    query: string,
+    analysis: any
+  ): string[] {
     if (products.length === 0) {
-      return ['Show popular products', 'Help me choose', 'Try different search', 'Browse categories'];
+      return [
+        "Show popular products",
+        "Help me choose",
+        "Try different search",
+        "Browse categories",
+      ];
     }
-    
-    const hasRealData = products.some(p => p.source !== 'ai_generated');
-    
+
+    const hasRealData = products.some((p) => p.source !== "ai_generated");
+
     if (hasRealData) {
-      return ['Compare prices', 'Check availability', 'Show more options', 'Filter by brand'];
+      return [
+        "Compare prices",
+        "Check availability",
+        "Show more options",
+        "Filter by brand",
+      ];
     }
-    
-    return ['Compare these products', 'Show more details', 'Filter by price', 'Help me choose'];
+
+    return [
+      "Compare these products",
+      "Show more details",
+      "Filter by price",
+      "Help me choose",
+    ];
   }
 
   static async processBrandPriceSelection(
@@ -310,58 +362,72 @@ Return only the response text:
     category: string
   ): Promise<EnhancedAIResponse> {
     try {
-      let searchQuery = '';
-      
-      if (brand !== 'any') {
+      let searchQuery = "";
+
+      if (brand !== "any") {
         searchQuery += `${brand} `;
       }
-      
+
       searchQuery += category;
-      
+
       // Parse price range
       let minPrice: number | undefined;
       let maxPrice: number | undefined;
-      
-      if (priceRange !== 'all') {
-        const [min, max] = priceRange.split('-').map(Number);
+
+      if (priceRange !== "all") {
+        const [min, max] = priceRange.split("-").map(Number);
         minPrice = min;
         maxPrice = max < 999999 ? max : undefined;
       }
 
-      console.log('Brand/Price selection search:', searchQuery, { minPrice, maxPrice });
-
-      // Search for products with price filtering
-      const products = await EnhancedRealtimeProductService.searchProducts(searchQuery, {
-        useRealData: true,
-        maxResults: 8,
+      console.log("Brand/Price selection search:", searchQuery, {
         minPrice,
-        maxPrice
+        maxPrice,
       });
 
+      // Search for products with price filtering
+      const products = await EnhancedRealtimeProductService.searchProducts(
+        searchQuery,
+        {
+          useRealData: true,
+          maxResults: 8,
+          minPrice,
+          maxPrice,
+        }
+      );
+
       // Generate response message
-      let message = '';
-      let dataSource: 'real_time' | 'ai_generated' | 'mixed' = 'ai_generated';
-      
+      let message = "";
+      let dataSource: "real_time" | "ai_generated" | "mixed" = "ai_generated";
+
       if (products.length > 0) {
-        const realProducts = products.filter(p => p.source !== 'ai_generated');
-        dataSource = realProducts.length > 0 ? 'real_time' : 'ai_generated';
-        
-        const brandText = brand !== 'any' ? `${brand} ` : '';
-        const priceText = priceRange !== 'all' ? ` in your selected price range` : '';
-        
+        const realProducts = products.filter(
+          (p) => p.source !== "ai_generated"
+        );
+        dataSource = realProducts.length > 0 ? "real_time" : "ai_generated";
+
+        const brandText = brand !== "any" ? `${brand} ` : "";
+        const priceText =
+          priceRange !== "all" ? ` in your selected price range` : "";
+
         message = `Perfect! I found ${products.length} ${brandText}${category} products${priceText} with live pricing and availability. Here are the best options for you:`;
       } else {
-        message = `I couldn't find any ${brand !== 'any' ? brand + ' ' : ''}${category} products in your selected price range. Let me show you some alternatives:`;
-        
+        message = `I couldn't find any ${
+          brand !== "any" ? brand + " " : ""
+        }${category} products in your selected price range. Let me show you some alternatives:`;
+
         // Fallback search without price constraint
-        const fallbackProducts = await EnhancedRealtimeProductService.searchProducts(
-          brand !== 'any' ? `${brand} ${category}` : category,
-          { useRealData: true, maxResults: 6 }
-        );
-        
+        const fallbackProducts =
+          await EnhancedRealtimeProductService.searchProducts(
+            brand !== "any" ? `${brand} ${category}` : category,
+            { useRealData: true, maxResults: 6 }
+          );
+
         if (fallbackProducts.length > 0) {
           products.push(...fallbackProducts);
-          message += ` Here are some ${brand !== 'any' ? brand + ' ' : ''}${category} options:`;
+          message += ` Here are some ${
+            brand !== "any" ? brand + " " : ""
+          }${category} options:`;
         }
       }
 
@@ -369,57 +435,79 @@ Return only the response text:
         message,
         products: products.slice(0, 6),
         suggestedActions: [
-          'Show more options',
-          'Compare these products',
-          'Filter by features',
-          'Change price range'
+          "Show more options",
+          "Compare these products",
+          "Filter by features",
+          "Change price range",
         ],
-        dataSource
+        dataSource,
       };
-
     } catch (error) {
-      console.error('Error processing brand/price selection:', error);
-      
+      console.error("Error processing brand/price selection:", error);
+
       return {
-        message: `I encountered an error while searching for ${brand !== 'any' ? brand + ' ' : ''}${category} products. Please try again or browse our popular products.`,
+        message: `I encountered an error while searching for ${
+          brand !== "any" ? brand + " " : ""
+        }${category} products. Please try again or browse our popular products.`,
         products: [],
-        suggestedActions: ['Try again', 'Browse categories', 'Show popular products'],
-        dataSource: 'ai_generated'
+        suggestedActions: [
+          "Try again",
+          "Browse categories",
+          "Show popular products",
+        ],
+        dataSource: "ai_generated",
       };
     }
   }
 
-  static async processQuizAnswers(answers: Array<{questionId: string, answer: string}>): Promise<EnhancedAIResponse> {
+  static async processQuizAnswers(
+    answers: Array<{ questionId: string; answer: string }>
+  ): Promise<EnhancedAIResponse> {
     try {
       // Extract preferences from quiz answers
-      const categoryAnswer = answers.find(a => a.questionId === 'category')?.answer.toLowerCase();
-      const budgetAnswer = answers.find(a => a.questionId === 'budget')?.answer;
-      const priorityAnswer = answers.find(a => a.questionId === 'priority')?.answer.toLowerCase();
+      const categoryAnswer = answers
+        .find((a) => a.questionId === "category")
+        ?.answer.toLowerCase();
+      const budgetAnswer = answers.find(
+        (a) => a.questionId === "budget"
+      )?.answer;
+      const priorityAnswer = answers
+        .find((a) => a.questionId === "priority")
+        ?.answer.toLowerCase();
 
-      let category = 'electronics';
+      let category = "electronics";
       let priceRange: { min: number; max: number } | undefined;
       let features: string[] = [];
 
       // Map category preferences
-      if (categoryAnswer?.includes('fitness') || categoryAnswer?.includes('health')) {
-        category = 'smartwatch fitness tracker';
-      } else if (categoryAnswer?.includes('music') || categoryAnswer?.includes('audio')) {
-        category = 'headphones earbuds';
-      } else if (categoryAnswer?.includes('communication') || categoryAnswer?.includes('productivity')) {
-        category = 'smartphone laptop';
-      } else if (categoryAnswer?.includes('gaming')) {
-        category = 'gaming laptop gaming accessories';
+      if (
+        categoryAnswer?.includes("fitness") ||
+        categoryAnswer?.includes("health")
+      ) {
+        category = "smartwatch fitness tracker";
+      } else if (
+        categoryAnswer?.includes("music") ||
+        categoryAnswer?.includes("audio")
+      ) {
+        category = "headphones earbuds";
+      } else if (
+        categoryAnswer?.includes("communication") ||
+        categoryAnswer?.includes("productivity")
+      ) {
+        category = "smartphone laptop";
+      } else if (categoryAnswer?.includes("gaming")) {
+        category = "gaming laptop gaming accessories";
       }
 
       // Map budget preferences
       if (budgetAnswer) {
-        const budgetRanges: {[key: string]: [number, number]} = {
-          'Under ₹20,000': [0, 20000],
-          '₹20,000 - ₹50,000': [20000, 50000],
-          '₹50,000 - ₹1,00,000': [50000, 100000],
-          'Above ₹1,00,000': [100000, 200000]
+        const budgetRanges: { [key: string]: [number, number] } = {
+          "Under ₹20,000": [0, 20000],
+          "₹20,000 - ₹50,000": [20000, 50000],
+          "₹50,000 - ₹1,00,000": [50000, 100000],
+          "Above ₹1,00,000": [100000, 200000],
         };
-        
+
         const range = budgetRanges[budgetAnswer];
         if (range) {
           priceRange = { min: range[0], max: range[1] };
@@ -427,32 +515,47 @@ Return only the response text:
       }
 
       // Get product recommendations
-      const products = await EnhancedRealtimeProductService.getProductRecommendations(
-        category,
-        priceRange,
-        features
-      );
+      const products =
+        await EnhancedRealtimeProductService.getProductRecommendations(
+          category,
+          priceRange,
+          features
+        );
 
       // Generate AI-powered quiz response
-      const message = await geminiService.generateQuizRecommendation(answers, products.slice(0, 4));
+      const message = await geminiService.generateQuizRecommendation(
+        answers,
+        products.slice(0, 4)
+      );
 
-      const dataSource = products.some(p => p.source !== 'ai_generated') ? 'real_time' : 'ai_generated';
+      const dataSource = products.some((p) => p.source !== "ai_generated")
+        ? "real_time"
+        : "ai_generated";
 
       return {
         message,
         products: products.slice(0, 4),
-        suggestedActions: ['Compare these products', 'Show more options', 'Refine search', 'Tell me more'],
-        dataSource
+        suggestedActions: [
+          "Compare these products",
+          "Show more options",
+          "Refine search",
+          "Tell me more",
+        ],
+        dataSource,
       };
-
     } catch (error) {
-      console.error('Error processing quiz:', error);
-      
+      console.error("Error processing quiz:", error);
+
       return {
-        message: "Based on your preferences, I'm having trouble finding the perfect products right now. Would you like to try a direct search instead?",
+        message:
+          "Based on your preferences, I'm having trouble finding the perfect products right now. Would you like to try a direct search instead?",
         products: [],
-        suggestedActions: ['Try direct search', 'Browse categories', 'Try again'],
-        dataSource: 'ai_generated'
+        suggestedActions: [
+          "Try direct search",
+          "Browse categories",
+          "Try again",
+        ],
+        dataSource: "ai_generated",
       };
     }
   }

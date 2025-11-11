@@ -1,38 +1,55 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Sparkles, AlertCircle, Zap, ShoppingBag, Plus, Paperclip, Mic, Menu, ShoppingCart, Settings, Wifi, WifiOff, User, MessageSquare, History } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { ChatMessage } from './chat-message';
-import { ProductCarousel } from './product-carousel';
-import { SuggestedActions } from './suggested-actions';
-import { QuizModal } from './quiz-modal';
-import { Sidebar } from '../sidebar/sidebar';
-import { SettingsScreen } from '../settings/settings-screen';
-import { CartScreen } from '../cart/cart-screen';
-import { WishlistScreen } from '../wishlist/wishlist-screen';
-import { BooksScreen } from '../books/books-screen';
-import { OrdersScreen } from '../orders/orders-screen';
-import { useRouter } from 'next/navigation';
-import { Message } from '@/types/chat';
-import { EnhancedAIAssistant } from '@/lib/ai-responses-enhanced';
-import { EnhancedRealtimeProduct } from '@/lib/realtime-products-enhanced';
-import { ShoppingAssistantResponse } from '@/lib/shopping-assistant';
-import { useAuth } from '@/contexts/auth-context';
-import { AuthModal } from '../auth/auth-modal';
-import { ProfileDropdown } from '../auth/profile-dropdown';
-import { useRealtimeChat } from '@/lib/hooks/use-realtime-chat';
-import { useRealtimeAnalytics } from '@/lib/hooks/use-realtime-analytics';
-import { toast } from 'sonner';
-import { UserOnboarding } from '../onboarding/user-onboarding';
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Send,
+  Sparkles,
+  AlertCircle,
+  Zap,
+  ShoppingBag,
+  Plus,
+  Paperclip,
+  Mic,
+  Menu,
+  ShoppingCart,
+  Settings,
+  Wifi,
+  WifiOff,
+  User,
+  MessageSquare,
+  History,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { ChatMessage } from "./chat-message";
+import { ProductCarousel } from "./product-carousel";
+import { SuggestedActions } from "./suggested-actions";
+import { QuizModal } from "./quiz-modal";
+import { Sidebar } from "../sidebar/sidebar";
+import { SettingsScreen } from "../settings/settings-screen";
+import { CartScreen } from "../cart/cart-screen";
+import { WishlistScreen } from "../wishlist/wishlist-screen";
+import { BooksScreen } from "../books/books-screen";
+import { OrdersScreen } from "../orders/orders-screen";
+import { useRouter } from "next/navigation";
+import { Message } from "@/types/chat";
+import { EnhancedAIAssistant } from "@/lib/ai-responses-enhanced";
+import { EnhancedRealtimeProduct } from "@/lib/realtime-products-enhanced";
+import { ShoppingAssistantResponse } from "@/lib/shopping-assistant";
+import { useAuth } from "@/contexts/auth-context";
+import { AuthModal } from "../auth/auth-modal";
+import { ProfileDropdown } from "../auth/profile-dropdown";
+import { useRealtimeChat } from "@/lib/hooks/use-realtime-chat";
+import { useRealtimeAnalytics } from "@/lib/hooks/use-realtime-analytics";
+import { toast } from "sonner";
+import { UserOnboarding } from "../onboarding/user-onboarding";
 
 // Add missing Loader2 icon import
-import { Loader2 } from 'lucide-react';
+import { Loader2 } from "lucide-react";
 
 export function ChatInterfaceEnhanced() {
   const router = useRouter();
@@ -44,22 +61,23 @@ export function ChatInterfaceEnhanced() {
     createNewChat,
     selectChat,
     addMessage,
-    clearCurrentChat
+    clearCurrentChat,
   } = useRealtimeChat();
-  const { trackSearch, trackChatInteraction, trackProductView } = useRealtimeAnalytics();
+  const { trackSearch, trackChatInteraction, trackProductView } =
+    useRealtimeAnalytics();
 
   // Local state for current conversation
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: '1',
-      content: "Hi! I'm ShopAI, your smart shopping assistant. Tell me what you're looking for and I'll find the best options with live prices and reviews.",
-      role: 'assistant',
+      id: "1",
+      content:
+        "Hi! I'm ShopWhiz, your smart shopping assistant. Tell me what you're looking for and I'll find the best options with live prices and reviews.",
+      role: "assistant",
       timestamp: Date.now(),
-      suggestedActions: ['iPhone 15 Pro Max', 'Samsung Galaxy S24', 'MacBook Pro M3', 'Sony headphones', 'Nike running shoes', 'Gaming laptops']
-    }
+    },
   ]);
 
-  const [currentMessage, setCurrentMessage] = useState('');
+  const [currentMessage, setCurrentMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -67,17 +85,22 @@ export function ChatInterfaceEnhanced() {
   const [showWishlist, setShowWishlist] = useState(false);
   const [showOrders, setShowOrders] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
-  const [realtimeProducts, setRealtimeProducts] = useState<EnhancedRealtimeProduct[]>([]);
-  const [structuredRecommendations, setStructuredRecommendations] = useState<any>(null);
+  const [realtimeProducts, setRealtimeProducts] = useState<
+    EnhancedRealtimeProduct[]
+  >([]);
+  const [structuredRecommendations, setStructuredRecommendations] =
+    useState<any>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [dataSource, setDataSource] = useState<'real_time' | 'ai_generated' | 'mixed'>('ai_generated');
+  const [dataSource, setDataSource] = useState<
+    "real_time" | "ai_generated" | "mixed"
+  >("ai_generated");
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
@@ -92,12 +115,20 @@ export function ChatInterfaceEnhanced() {
       // Reset to welcome message when no chat is selected
       setMessages([
         {
-          id: '1',
-          content: "Hi! I'm ShopAI, your smart shopping assistant. Tell me what you're looking for and I'll find the best options with live prices and reviews.",
-          role: 'assistant',
+          id: "1",
+          content:
+            "Hi! I'm ShopWhiz, your smart shopping assistant. Tell me what you're looking for and I'll find the best options with live prices and reviews.",
+          role: "assistant",
           timestamp: Date.now(),
-          suggestedActions: ['iPhone 15 Pro Max', 'Samsung Galaxy S24', 'MacBook Pro M3', 'Sony headphones', 'Nike running shoes', 'Gaming laptops']
-        }
+          suggestedActions: [
+            "iPhone 15 Pro Max",
+            "Samsung Galaxy S24",
+            "MacBook Pro M3",
+            "Sony headphones",
+            "Nike running shoes",
+            "Gaming laptops",
+          ],
+        },
       ]);
     }
   }, [currentChat]);
@@ -113,21 +144,23 @@ export function ChatInterfaceEnhanced() {
     };
 
     handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // Show onboarding for new users
   useEffect(() => {
     if (isAuthenticated && user) {
       // Check if user has completed onboarding
-      const hasCompletedOnboarding = localStorage.getItem(`onboarding-completed-${user.id}`);
+      const hasCompletedOnboarding = localStorage.getItem(
+        `onboarding-completed-${user.id}`
+      );
       if (!hasCompletedOnboarding) {
         // Show onboarding after a short delay
         const timer = setTimeout(() => {
           setShowOnboarding(true);
         }, 1000);
-        
+
         return () => clearTimeout(timer);
       }
     }
@@ -135,10 +168,12 @@ export function ChatInterfaceEnhanced() {
 
   // Check API configuration
   useEffect(() => {
-    const hasGeminiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY && 
-                        process.env.NEXT_PUBLIC_GEMINI_API_KEY !== 'your_gemini_api_key_here';
-    const hasScraperKey = process.env.NEXT_PUBLIC_SCRAPER_API_KEY && 
-                         process.env.NEXT_PUBLIC_SCRAPER_API_KEY !== 'your_scraper_api_key_here';
+    const hasGeminiKey =
+      process.env.NEXT_PUBLIC_GEMINI_API_KEY &&
+      process.env.NEXT_PUBLIC_GEMINI_API_KEY !== "your_gemini_api_key_here";
+    const hasScraperKey =
+      process.env.NEXT_PUBLIC_SCRAPER_API_KEY &&
+      process.env.NEXT_PUBLIC_SCRAPER_API_KEY !== "your_scraper_api_key_here";
 
     // if (!hasGeminiKey) {
     //   setApiError('Gemini AI key not configured. Please add your API key to .env.local');
@@ -155,14 +190,14 @@ export function ChatInterfaceEnhanced() {
     const userMessage: Message = {
       id: Date.now().toString(),
       content,
-      role: 'user',
-      timestamp: Date.now()
+      role: "user",
+      timestamp: Date.now(),
     };
 
     // Update local messages immediately
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
-    setCurrentMessage('');
+    setCurrentMessage("");
     setIsLoading(true);
     setApiError(null);
 
@@ -182,25 +217,25 @@ export function ChatInterfaceEnhanced() {
 
     // Add typing indicator
     const typingMessage: Message = {
-      id: 'typing',
-      content: '',
-      role: 'assistant',
+      id: "typing",
+      content: "",
+      role: "assistant",
       timestamp: Date.now(),
-      isTyping: true
+      isTyping: true,
     };
-    setMessages(prev => [...prev, typingMessage]);
+    setMessages((prev) => [...prev, typingMessage]);
 
     try {
       const response = await EnhancedAIAssistant.processQuery(content);
-      
+
       // Remove typing indicator
-      setMessages(prev => prev.filter(msg => msg.id !== 'typing'));
+      setMessages((prev) => prev.filter((msg) => msg.id !== "typing"));
 
       // Store real-time products and data source
       if (response.products) {
         setRealtimeProducts(response.products);
-        setDataSource(response.dataSource || 'ai_generated');
-        
+        setDataSource(response.dataSource || "ai_generated");
+
         // Track product views
         for (const product of response.products.slice(0, 3)) {
           await trackProductView(
@@ -217,26 +252,23 @@ export function ChatInterfaceEnhanced() {
           setRealtimeProducts([]);
         }
       }
-      
-      if (response.structuredRecommendations) {
-        setStructuredRecommendations(response.structuredRecommendations);
-      }
+
+      // Do not surface structured recommendations during search
+      setStructuredRecommendations(null);
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: response.message,
-        role: 'assistant',
+        role: "assistant",
         timestamp: Date.now(),
         hasProducts: response.products && response.products.length > 0,
-        suggestedActions: response.suggestedActions,
-        clarifyingQuestions: response.clarifyingQuestions,
-        brandSuggestions: response.brandSuggestions,
+        // Remove recommendations and suggestions during search responses
         needsMoreInfo: response.needsMoreInfo,
-        category: response.category
+        category: response.category,
       };
 
       // Update local messages
-      setMessages(prev => [...prev, aiMessage]);
+      setMessages((prev) => [...prev, aiMessage]);
 
       // Save AI message to database if chat exists
       if (chatToUse && isAuthenticated) {
@@ -246,7 +278,7 @@ export function ChatInterfaceEnhanced() {
       // Track chat interaction
       await trackChatInteraction(
         content,
-        response.needsMoreInfo ? 'clarification' : 'product_search',
+        response.needsMoreInfo ? "clarification" : "product_search",
         response.products?.length || 0
       );
 
@@ -254,52 +286,65 @@ export function ChatInterfaceEnhanced() {
         setShowQuiz(true);
       }
     } catch (error) {
-      console.error('Error processing message:', error);
-      setMessages(prev => prev.filter(msg => msg.id !== 'typing'));
-      
+      console.error("Error processing message:", error);
+      setMessages((prev) => prev.filter((msg) => msg.id !== "typing"));
+
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: "I'm sorry, I encountered an error while searching for products. This might be due to API configuration issues or network connectivity. Please try again or check if the API keys are properly set up.",
-        role: 'assistant',
+        content:
+          "I'm sorry, I encountered an error while searching for products. This might be due to API configuration issues or network connectivity. Please try again or check if the API keys are properly set up.",
+        role: "assistant",
         timestamp: Date.now(),
-        suggestedActions: ['Try again', 'Check API setup', 'Show popular products', 'Browse categories']
+        // No suggested actions on error
       };
-      
-      setMessages(prev => [...prev, errorMessage]);
-      
+
+      setMessages((prev) => [...prev, errorMessage]);
+
       // Save error message to database if chat exists
       if (chatToUse && isAuthenticated) {
         await addMessage(errorMessage);
       }
-      
-      setApiError('Failed to get product data. Please check your API configuration.');
+
+      setApiError(
+        "Failed to get product data. Please check your API configuration."
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleBrandPriceSelection = async (brand: string, priceRange: string, category: string) => {
+  const handleBrandPriceSelection = async (
+    brand: string,
+    priceRange: string,
+    category: string
+  ) => {
     setIsLoading(true);
     setApiError(null);
 
     const typingMessage: Message = {
-      id: 'typing-selection',
-      content: '',
-      role: 'assistant',
+      id: "typing-selection",
+      content: "",
+      role: "assistant",
       timestamp: Date.now(),
-      isTyping: true
+      isTyping: true,
     };
-    setMessages(prev => [...prev, typingMessage]);
+    setMessages((prev) => [...prev, typingMessage]);
 
     try {
-      const response = await EnhancedAIAssistant.processBrandPriceSelection(brand, priceRange, category);
-      
-      setMessages(prev => prev.filter(msg => msg.id !== 'typing-selection'));
+      const response = await EnhancedAIAssistant.processBrandPriceSelection(
+        brand,
+        priceRange,
+        category
+      );
+
+      setMessages((prev) =>
+        prev.filter((msg) => msg.id !== "typing-selection")
+      );
 
       if (response.products) {
         setRealtimeProducts(response.products);
-        setDataSource(response.dataSource || 'ai_generated');
-        
+        setDataSource(response.dataSource || "ai_generated");
+
         // Track product views
         for (const product of response.products.slice(0, 3)) {
           await trackProductView(
@@ -312,21 +357,20 @@ export function ChatInterfaceEnhanced() {
           );
         }
       }
-      
-      if (response.structuredRecommendations) {
-        setStructuredRecommendations(response.structuredRecommendations);
-      }
+
+      // Do not surface structured recommendations during brand/price selection
+      setStructuredRecommendations(null);
 
       const aiMessage: Message = {
         id: Date.now().toString(),
         content: response.message,
-        role: 'assistant',
+        role: "assistant",
         timestamp: Date.now(),
         hasProducts: response.products && response.products.length > 0,
-        suggestedActions: response.suggestedActions
+        // Remove suggested actions during selection flow
       };
 
-      setMessages(prev => [...prev, aiMessage]);
+      setMessages((prev) => [...prev, aiMessage]);
 
       // Save to database if chat exists
       if (currentChat && isAuthenticated) {
@@ -334,20 +378,26 @@ export function ChatInterfaceEnhanced() {
       }
 
       // Track selection
-      await trackSearch(`${brand} ${category} ${priceRange}`, category, response.products?.length || 0);
-
+      await trackSearch(
+        `${brand} ${category} ${priceRange}`,
+        category,
+        response.products?.length || 0
+      );
     } catch (error) {
-      console.error('Error processing brand/price selection:', error);
-      setMessages(prev => prev.filter(msg => msg.id !== 'typing-selection'));
-      
+      console.error("Error processing brand/price selection:", error);
+      setMessages((prev) =>
+        prev.filter((msg) => msg.id !== "typing-selection")
+      );
+
       const errorMessage: Message = {
         id: Date.now().toString(),
-        content: "I encountered an error while searching for products based on your selection. Please try again.",
-        role: 'assistant',
+        content:
+          "I encountered an error while searching for products based on your selection. Please try again.",
+        role: "assistant",
         timestamp: Date.now(),
-        suggestedActions: ['Try again', 'Browse categories', 'Show popular products']
+        // No suggested actions on error
       };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages((prev) => [...prev, errorMessage]);
 
       if (currentChat && isAuthenticated) {
         await addMessage(errorMessage);
@@ -358,36 +408,38 @@ export function ChatInterfaceEnhanced() {
   };
 
   const handleSuggestedAction = (action: string) => {
-    if (action === 'Help me choose' || action === 'Start quiz') {
+    if (action === "Help me choose" || action === "Start quiz") {
       setShowQuiz(true);
     } else {
       handleSendMessage(action);
     }
   };
 
-  const handleQuizComplete = async (answers: Array<{questionId: string, answer: string}>) => {
+  const handleQuizComplete = async (
+    answers: Array<{ questionId: string; answer: string }>
+  ) => {
     setShowQuiz(false);
     setIsLoading(true);
     setApiError(null);
 
     const typingMessage: Message = {
-      id: 'typing-quiz',
-      content: '',
-      role: 'assistant',
+      id: "typing-quiz",
+      content: "",
+      role: "assistant",
       timestamp: Date.now(),
-      isTyping: true
+      isTyping: true,
     };
-    setMessages(prev => [...prev, typingMessage]);
+    setMessages((prev) => [...prev, typingMessage]);
 
     try {
       const response = await EnhancedAIAssistant.processQuizAnswers(answers);
-      
-      setMessages(prev => prev.filter(msg => msg.id !== 'typing-quiz'));
+
+      setMessages((prev) => prev.filter((msg) => msg.id !== "typing-quiz"));
 
       if (response.products) {
         setRealtimeProducts(response.products);
-        setDataSource(response.dataSource || 'ai_generated');
-        
+        setDataSource(response.dataSource || "ai_generated");
+
         // Track product views
         for (const product of response.products.slice(0, 3)) {
           await trackProductView(
@@ -400,21 +452,20 @@ export function ChatInterfaceEnhanced() {
           );
         }
       }
-      
-      if (response.structuredRecommendations) {
-        setStructuredRecommendations(response.structuredRecommendations);
-      }
+
+      // Do not surface structured recommendations after quiz
+      setStructuredRecommendations(null);
 
       const aiMessage: Message = {
         id: Date.now().toString(),
         content: response.message,
-        role: 'assistant',
+        role: "assistant",
         timestamp: Date.now(),
         hasProducts: response.products && response.products.length > 0,
-        suggestedActions: response.suggestedActions
+        // Remove suggested actions after quiz completion
       };
 
-      setMessages(prev => [...prev, aiMessage]);
+      setMessages((prev) => [...prev, aiMessage]);
 
       // Save to database if chat exists
       if (currentChat && isAuthenticated) {
@@ -422,19 +473,24 @@ export function ChatInterfaceEnhanced() {
       }
 
       // Track quiz completion
-      await trackChatInteraction('quiz_completion', 'quiz_results', response.products?.length || 0);
+      await trackChatInteraction(
+        "quiz_completion",
+        "quiz_results",
+        response.products?.length || 0
+      );
     } catch (error) {
-      console.error('Error processing quiz:', error);
-      setMessages(prev => prev.filter(msg => msg.id !== 'typing-quiz'));
-      
+      console.error("Error processing quiz:", error);
+      setMessages((prev) => prev.filter((msg) => msg.id !== "typing-quiz"));
+
       const errorMessage: Message = {
         id: Date.now().toString(),
-        content: "I encountered an error while processing your quiz responses. Please try again.",
-        role: 'assistant',
+        content:
+          "I encountered an error while processing your quiz responses. Please try again.",
+        role: "assistant",
         timestamp: Date.now(),
-        suggestedActions: ['Try again', 'Browse categories', 'Search directly']
+        // No suggested actions on error
       };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages((prev) => [...prev, errorMessage]);
 
       if (currentChat && isAuthenticated) {
         await addMessage(errorMessage);
@@ -448,8 +504,8 @@ export function ChatInterfaceEnhanced() {
     clearCurrentChat();
     setRealtimeProducts([]);
     setStructuredRecommendations(null);
-    setDataSource('ai_generated');
-    
+    setDataSource("ai_generated");
+
     if (isAuthenticated) {
       // Create a new chat in the database
       await createNewChat();
@@ -462,12 +518,12 @@ export function ChatInterfaceEnhanced() {
 
   const getDataSourceInfo = () => {
     switch (dataSource) {
-      case 'real_time':
-        return { text: 'Live data from Google Shopping & Amazon' };
-      case 'mixed':
-        return { text: 'Real-time + AI recommendations' };
+      case "real_time":
+        return { text: "Live data from Google Shopping & Amazon" };
+      case "mixed":
+        return { text: "Real-time + AI recommendations" };
       default:
-        return { text: 'AI-powered recommendations' };
+        return { text: "AI-powered recommendations" };
     }
   };
 
@@ -484,7 +540,7 @@ export function ChatInterfaceEnhanced() {
         onWishlistClick={() => setShowWishlist(true)}
         onBooksClick={() => {}} // Add empty handler for onBooksClick
         onOrdersClick={() => setShowOrders(true)}
-        onAnalyticsClick={() => router.push('/analytics')}
+        onAnalyticsClick={() => router.push("/analytics")}
         currentChatId={currentChat?.id}
         chats={chats}
         loading={chatLoading}
@@ -512,7 +568,7 @@ export function ChatInterfaceEnhanced() {
             <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-purple-400 flex items-center justify-center">
               <ShoppingBag className="w-4 h-4 text-white" />
             </div>
-            <span className="font-semibold gradient-text">ShopAI</span>
+            <span className="font-semibold gradient-text">ShopWhiz</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -547,14 +603,31 @@ export function ChatInterfaceEnhanced() {
               <AlertCircle className="h-4 w-4" />
               <AlertDescription className="text-sm">
                 {apiError}
-                {apiError.includes('Gemini') && (
+                {apiError.includes("Gemini") && (
                   <span className="block mt-1 text-xs text-muted-foreground">
-                    Get your free API key from <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="underline">Google AI Studio</a>
+                    Get your free API key from{" "}
+                    <a
+                      href="https://makersuite.google.com/app/apikey"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline"
+                    >
+                      Google AI Studio
+                    </a>
                   </span>
                 )}
-                {apiError.includes('ScraperAPI') && (
+                {apiError.includes("ScraperAPI") && (
                   <span className="block mt-1 text-xs text-muted-foreground">
-                    Get your API key from <a href="https://www.scraperapi.com/" target="_blank" rel="noopener noreferrer" className="underline">ScraperAPI</a> for real-time product data
+                    Get your API key from{" "}
+                    <a
+                      href="https://www.scraperapi.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline"
+                    >
+                      ScraperAPI
+                    </a>{" "}
+                    for real-time product data
                   </span>
                 )}
               </AlertDescription>
@@ -571,18 +644,15 @@ export function ChatInterfaceEnhanced() {
           {/* Data Source Indicator and Chat Info */}
           <div className="flex items-center gap-4">
             {realtimeProducts.length > 0 && (
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.8 }} 
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="flex items-center gap-2 px-3 py-1.5 bg-green-950/20 dark:bg-green-900/30 backdrop-blur-sm border border-green-500/20 rounded-full shadow-sm"
-              > 
+              >
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-xs font-medium text-green-600 dark:text-green-400">
-                  {getDataSourceInfo().text}
-                </span>
               </motion.div>
             )}
-            
+
             {currentChat && isAuthenticated && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <MessageSquare className="w-4 h-4" />
@@ -639,11 +709,11 @@ export function ChatInterfaceEnhanced() {
                   initial={{ opacity: 0, y: 20, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                  transition={{ 
+                  transition={{
                     duration: 0.4,
                     type: "spring",
                     stiffness: 100,
-                    damping: 15
+                    damping: 15,
                   }}
                 >
                   <ChatMessage
@@ -655,12 +725,12 @@ export function ChatInterfaceEnhanced() {
                     <motion.div
                       initial={{ opacity: 0, scale: 0.9, y: 20 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
-                      transition={{ 
+                      transition={{
                         delay: 0.3,
                         duration: 0.5,
                         type: "spring",
                         stiffness: 120,
-                        damping: 20
+                        damping: 20,
                       }}
                       className="mt-4"
                     >
@@ -690,8 +760,11 @@ export function ChatInterfaceEnhanced() {
             >
               {/* Shining Border Effect */}
               <div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-purple-500 to-primary rounded-2xl opacity-30 blur-sm animate-pulse"></div>
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-primary via-purple-500 to-primary rounded-2xl opacity-20 animate-pulse" style={{ animationDelay: '0.5s' }}></div>
-              
+              <div
+                className="absolute -inset-0.5 bg-gradient-to-r from-primary via-purple-500 to-primary rounded-2xl opacity-20 animate-pulse"
+                style={{ animationDelay: "0.5s" }}
+              ></div>
+
               {/* Input Field */}
               <div className="relative flex items-center bg-background/95 backdrop-blur-sm border border-border/50 rounded-2xl px-4 py-3 focus-within:border-primary/50 focus-within:bg-background/80 transition-all duration-200 shadow-lg">
                 <Button
@@ -709,7 +782,7 @@ export function ChatInterfaceEnhanced() {
                   placeholder="Search for any product..."
                   disabled={isLoading}
                   className="flex-1 bg-transparent border-0 outline-none text-sm placeholder:text-muted-foreground/70 resize-none"
-                  style={{ minHeight: '20px' }}
+                  style={{ minHeight: "20px" }}
                 />
 
                 <div className="flex items-center gap-1 ml-2">
@@ -731,7 +804,11 @@ export function ChatInterfaceEnhanced() {
                     {isLoading ? (
                       <motion.div
                         animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
                       >
                         <Sparkles className="w-4 h-4 text-primary-foreground" />
                       </motion.div>
@@ -758,33 +835,27 @@ export function ChatInterfaceEnhanced() {
         onClose={() => setShowSettings(false)}
       />
 
-      <CartScreen
-        open={showCart}
-        onClose={() => setShowCart(false)}
-      />
+      <CartScreen open={showCart} onClose={() => setShowCart(false)} />
 
       <WishlistScreen
         open={showWishlist}
         onClose={() => setShowWishlist(false)}
       />
 
-      <OrdersScreen
-        open={showOrders}
-        onClose={() => setShowOrders(false)}
-      />
+      <OrdersScreen open={showOrders} onClose={() => setShowOrders(false)} />
 
       <AuthModal
         open={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         defaultMode="login"
       />
-      
+
       <UserOnboarding
         open={showOnboarding}
         onClose={() => {
           setShowOnboarding(false);
           if (user) {
-            localStorage.setItem(`onboarding-completed-${user.id}`, 'true');
+            localStorage.setItem(`onboarding-completed-${user.id}`, "true");
           }
         }}
       />

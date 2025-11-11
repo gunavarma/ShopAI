@@ -1,7 +1,7 @@
-# ShopAI Analytics Features
+# ShopWhiz Analytics Features
 
 ## Overview
-The ShopAI platform now includes a comprehensive analytics dashboard that provides deep insights into user shopping behavior, product preferences, and platform usage patterns.
+The ShopWhiz platform now includes a comprehensive analytics dashboard that provides deep insights into user shopping behavior, product preferences, and platform usage patterns.
 
 ## Features Added
 
@@ -137,4 +137,4 @@ The ShopAI platform now includes a comprehensive analytics dashboard that provid
 
 ---
 
-*This analytics system provides ShopAI users with valuable insights into their shopping behavior, helping them make more informed purchasing decisions and discover new product opportunities.*
+*This analytics system provides ShopWhiz users with valuable insights into their shopping behavior, helping them make more informed purchasing decisions and discover new product opportunities.*

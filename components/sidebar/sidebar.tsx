@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  MessageSquare, 
-  Settings, 
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  MessageSquare,
+  Settings,
   History,
   Loader2,
-  Plus, 
+  Plus,
   Search,
   Trash2,
   Edit3,
@@ -25,28 +25,33 @@ import {
   ExternalLink,
   Zap,
   Headphones,
-  BarChart3
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useTheme } from 'next-themes';
+  BarChart3,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useTheme } from "next-themes";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useAuth } from '@/contexts/auth-context';
-import { AuthModal } from '../auth/auth-modal';
-import { useRealtimeChat } from '@/lib/hooks/use-realtime-chat';
-import { ProfileDropdown } from '../auth/profile-dropdown';
-import { ChatHistory } from '@/lib/database/types';
+} from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useAuth } from "@/contexts/auth-context";
+import { AuthModal } from "../auth/auth-modal";
+import { useRealtimeChat } from "@/lib/hooks/use-realtime-chat";
+import { ProfileDropdown } from "../auth/profile-dropdown";
+import { ChatHistory } from "@/lib/database/types";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -64,11 +69,11 @@ interface SidebarProps {
   loading?: boolean;
 }
 
-export function Sidebar({ 
-  isOpen, 
-  onToggle, 
-  onNewChat, 
-  onChatSelect, 
+export function Sidebar({
+  isOpen,
+  onToggle,
+  onNewChat,
+  onChatSelect,
   onSettingsClick,
   onCartClick,
   onWishlistClick,
@@ -77,9 +82,9 @@ export function Sidebar({
   onAnalyticsClick,
   currentChatId,
   chats: externalChats,
-  loading: externalLoading = false
+  loading: externalLoading = false,
 }: SidebarProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const { theme, setTheme } = useTheme();
   const { isAuthenticated, user } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -89,9 +94,10 @@ export function Sidebar({
   const chatHistory = externalChats || dbChats || [];
   const isLoading = externalLoading || dbLoading;
 
-  const filteredHistory = chatHistory.filter(chat =>
-    chat.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    chat.last_message?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredHistory = chatHistory.filter(
+    (chat) =>
+      chat.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      chat.last_message?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const formatTimestamp = (timestamp: string) => {
@@ -110,43 +116,45 @@ export function Sidebar({
 
   const getThemeIcon = () => {
     switch (theme) {
-      case 'light': return <Sun className="w-4 h-4" />;
-      case 'dark': return <Moon className="w-4 h-4" />;
-      default: return <Monitor className="w-4 h-4" />;
+      case "light":
+        return <Sun className="w-4 h-4" />;
+      case "dark":
+        return <Moon className="w-4 h-4" />;
+      default:
+        return <Monitor className="w-4 h-4" />;
     }
   };
 
   return (
     <TooltipProvider>
       {/* Mobile Overlay - Only show when sidebar is open on mobile */}
-    
-      {/* Absolute Positioned Sidebar */}
-    <motion.aside
-  initial={false}
-  animate={{ 
-    width: isOpen ? 320 : 60,
-    x: 0
-  }}
-  transition={{ 
-    type: "spring", 
-    damping: 30, 
-    stiffness: 300
-  }}
-  className={`fixed left-0 top-0 h-full  z-50 flex flex-col overflow-hidden ${
-    isOpen ? 'glass-card' : ''
-  }`}
-  onMouseEnter={() => {
-    if (window.innerWidth >= 1024 && !isOpen) {
-      onToggle(); // open
-    }
-  }}
-  onMouseLeave={() => {
-    if (window.innerWidth >= 1024 && isOpen) {
-      onToggle(); // close
-    }
-  }}
->
 
+      {/* Absolute Positioned Sidebar */}
+      <motion.aside
+        initial={false}
+        animate={{
+          width: isOpen ? 320 : 60,
+          x: 0,
+        }}
+        transition={{
+          type: "spring",
+          damping: 30,
+          stiffness: 300,
+        }}
+        className={`fixed left-0 top-0 h-full  z-50 flex flex-col overflow-hidden ${
+          isOpen ? "glass-card" : ""
+        }`}
+        onMouseEnter={() => {
+          if (window.innerWidth >= 1024 && !isOpen) {
+            onToggle(); // open
+          }
+        }}
+        onMouseLeave={() => {
+          if (window.innerWidth >= 1024 && isOpen) {
+            onToggle(); // close
+          }
+        }}
+      >
         {/* Collapsed State - Icons Only */}
         {!isOpen && (
           <motion.div
@@ -154,13 +162,11 @@ export function Sidebar({
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
             className="flex flex-col h-full w-full p-3 space-y-3"
-          >
-          
-          </motion.div>
+          ></motion.div>
         )}
 
         {/* Expanded State - Full Content */}
-       {isOpen && (
+        {isOpen && (
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -170,7 +176,6 @@ export function Sidebar({
             {/* Header with User Avatar and App Info */}
             <div className="p-4 border-b border-border/50">
               <div className="flex items-center gap-3 mb-4">
-                
                 {/* User Profile Section */}
                 {isAuthenticated ? (
                   <div className="flex items-center gap-3 mb-4">
@@ -200,9 +205,11 @@ export function Sidebar({
                     <div className="w-6 h-6 rounded-full bg-gradient-to-r from-primary to-purple-400 flex items-center justify-center">
                       <ShoppingBag className="w-3 h-3 text-white" />
                     </div>
-                  <h2 className="font-semibold gradient-text">ShopAI</h2>
+                    <h2 className="font-semibold gradient-text">ShopWhiz</h2>
                   </div>
-                  <p className="text-xs text-muted-foreground">AI Shopping Assistant</p>
+                  <p className="text-xs text-muted-foreground">
+                    AI Shopping Assistant
+                  </p>
                 </div>
                 {/* Collapse Button - Desktop Only */}
                 <div className="hidden lg:block">
@@ -246,9 +253,11 @@ export function Sidebar({
               <div className="p-4 pb-2">
                 <div className="flex items-center gap-2 mb-3">
                   <History className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm font-medium text-muted-foreground">Recent Chats</span>
+                  <span className="text-sm font-medium text-muted-foreground">
+                    Recent Chats
+                  </span>
                   <Badge variant="secondary" className="text-xs">
-                    {isLoading ? '...' : filteredHistory.length}
+                    {isLoading ? "..." : filteredHistory.length}
                   </Badge>
                 </div>
               </div>
@@ -266,7 +275,9 @@ export function Sidebar({
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         className={`group relative p-3 rounded-lg cursor-pointer transition-all duration-200 hover:bg-muted/50 ${
-                          currentChatId === chat.id ? 'bg-primary/10 border border-primary/30' : 'hover:bg-muted/30'
+                          currentChatId === chat.id
+                            ? "bg-primary/10 border border-primary/30"
+                            : "hover:bg-muted/30"
                         }`}
                         onClick={() => onChatSelect(chat.id)}
                       >
@@ -274,7 +285,9 @@ export function Sidebar({
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                               <MessageSquare className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-                              <h4 className="text-sm font-medium truncate">{chat.title}</h4>
+                              <h4 className="text-sm font-medium truncate">
+                                {chat.title}
+                              </h4>
                             </div>
                             {chat.last_message && (
                               <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
@@ -322,7 +335,9 @@ export function Sidebar({
                       <div className="text-center py-8">
                         <MessageSquare className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
                         <p className="text-sm text-muted-foreground">
-                          {searchQuery ? 'No chats found' : 'No chat history yet'}
+                          {searchQuery
+                            ? "No chats found"
+                            : "No chat history yet"}
                         </p>
                         {!searchQuery && (
                           <p className="text-xs text-muted-foreground mt-1">
@@ -348,15 +363,15 @@ export function Sidebar({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setTheme('light')}>
+                    <DropdownMenuItem onClick={() => setTheme("light")}>
                       <Sun className="w-4 h-4 mr-2" />
                       Light
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTheme('dark')}>
+                    <DropdownMenuItem onClick={() => setTheme("dark")}>
                       <Moon className="w-4 h-4 mr-2" />
                       Dark
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTheme('system')}>
+                    <DropdownMenuItem onClick={() => setTheme("system")}>
                       <Monitor className="w-4 h-4 mr-2" />
                       System
                     </DropdownMenuItem>
@@ -407,7 +422,7 @@ export function Sidebar({
                   <ShoppingCart className="w-4 h-4 mr-2" />
                   Shopping Cart
                 </Button>
-                
+
                 <Button
                   variant="ghost"
                   size="sm"

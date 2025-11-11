@@ -1,10 +1,12 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || '');
+const genAI = new GoogleGenerativeAI(
+  process.env.NEXT_PUBLIC_GEMINI_API_KEY || ""
+);
 
 export class GeminiService {
-  private model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  private model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
   async generateResponse(prompt: string): Promise<string> {
     try {
@@ -12,12 +14,16 @@ export class GeminiService {
       const response = await result.response;
       return response.text();
     } catch (error) {
-      console.error('Gemini API Error:', error);
-      throw new Error('Failed to generate AI response');
+      console.error("Gemini API Error:", error);
+      throw new Error("Failed to generate AI response");
     }
   }
 
-  async getRelatedProductImages(productName: string, category: string, brand: string): Promise<string[]> {
+  async getRelatedProductImages(
+    productName: string,
+    category: string,
+    brand: string
+  ): Promise<string[]> {
     try {
       const prompt = `
 Generate 4 related product image URLs from Pexels for this product:
@@ -49,21 +55,21 @@ Return only the JSON array without any markdown formatting:
 `;
 
       const response = await this.generateResponse(prompt);
-      const cleanResponse = response.replace(/```json\n?|\n?```/g, '').trim();
-      
+      const cleanResponse = response.replace(/```json\n?|\n?```/g, "").trim();
+
       try {
         const images = JSON.parse(cleanResponse);
         if (Array.isArray(images) && images.length > 0) {
           return images.slice(0, 4); // Ensure max 4 images
         }
       } catch (parseError) {
-        console.error('Failed to parse image URLs:', parseError);
+        console.error("Failed to parse image URLs:", parseError);
       }
-      
+
       // Fallback images based on category
       return this.getFallbackImages(category);
     } catch (error) {
-      console.error('Error getting related images:', error);
+      console.error("Error getting related images:", error);
       return this.getFallbackImages(category);
     }
   }
@@ -71,88 +77,88 @@ Return only the JSON array without any markdown formatting:
   private getFallbackImages(category: string): string[] {
     const fallbackMap: Record<string, string[]> = {
       // Electronics
-      'monitor': [
-        'https://images.pexels.com/photos/356056/pexels-photo-356056.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1714208/pexels-photo-1714208.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/2047905/pexels-photo-2047905.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1029757/pexels-photo-1029757.jpeg?auto=compress&cs=tinysrgb&w=800'
+      monitor: [
+        "https://images.pexels.com/photos/356056/pexels-photo-356056.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1714208/pexels-photo-1714208.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/2047905/pexels-photo-2047905.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1029757/pexels-photo-1029757.jpeg?auto=compress&cs=tinysrgb&w=800",
       ],
-      'laptop': [
-        'https://images.pexels.com/photos/205421/pexels-photo-205421.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/18105/pexels-photo-18105.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/574071/pexels-photo-574071.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1229861/pexels-photo-1229861.jpeg?auto=compress&cs=tinysrgb&w=800'
+      laptop: [
+        "https://images.pexels.com/photos/205421/pexels-photo-205421.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/18105/pexels-photo-18105.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/574071/pexels-photo-574071.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1229861/pexels-photo-1229861.jpeg?auto=compress&cs=tinysrgb&w=800",
       ],
-      'smartphone': [
-        'https://images.pexels.com/photos/699122/pexels-photo-699122.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1092644/pexels-photo-1092644.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/47261/pexels-photo-47261.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1440727/pexels-photo-1440727.jpeg?auto=compress&cs=tinysrgb&w=800'
+      smartphone: [
+        "https://images.pexels.com/photos/699122/pexels-photo-699122.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1092644/pexels-photo-1092644.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/47261/pexels-photo-47261.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1440727/pexels-photo-1440727.jpeg?auto=compress&cs=tinysrgb&w=800",
       ],
-      'headphones': [
-        'https://images.pexels.com/photos/3394650/pexels-photo-3394650.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1649771/pexels-photo-1649771.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/3394651/pexels-photo-3394651.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1649772/pexels-photo-1649772.jpeg?auto=compress&cs=tinysrgb&w=800'
+      headphones: [
+        "https://images.pexels.com/photos/3394650/pexels-photo-3394650.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1649771/pexels-photo-1649771.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/3394651/pexels-photo-3394651.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1649772/pexels-photo-1649772.jpeg?auto=compress&cs=tinysrgb&w=800",
       ],
-      'smartwatch': [
-        'https://images.pexels.com/photos/437037/pexels-photo-437037.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/393047/pexels-photo-393047.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1697214/pexels-photo-1697214.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1649771/pexels-photo-1649771.jpeg?auto=compress&cs=tinysrgb&w=800'
+      smartwatch: [
+        "https://images.pexels.com/photos/437037/pexels-photo-437037.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/393047/pexels-photo-393047.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1697214/pexels-photo-1697214.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1649771/pexels-photo-1649771.jpeg?auto=compress&cs=tinysrgb&w=800",
       ],
-      
+
       // Fashion
-      'clothing': [
-        'https://images.pexels.com/photos/996329/pexels-photo-996329.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1040945/pexels-photo-1040945.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1927259/pexels-photo-1927259.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1040946/pexels-photo-1040946.jpeg?auto=compress&cs=tinysrgb&w=800'
+      clothing: [
+        "https://images.pexels.com/photos/996329/pexels-photo-996329.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1040945/pexels-photo-1040945.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1927259/pexels-photo-1927259.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1040946/pexels-photo-1040946.jpeg?auto=compress&cs=tinysrgb&w=800",
       ],
-      'shoes': [
-        'https://images.pexels.com/photos/2529148/pexels-photo-2529148.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1598505/pexels-photo-1598505.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/2529149/pexels-photo-2529149.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1598506/pexels-photo-1598506.jpeg?auto=compress&cs=tinysrgb&w=800'
+      shoes: [
+        "https://images.pexels.com/photos/2529148/pexels-photo-2529148.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1598505/pexels-photo-1598505.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/2529149/pexels-photo-2529149.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1598506/pexels-photo-1598506.jpeg?auto=compress&cs=tinysrgb&w=800",
       ],
-      
+
       // Home & Kitchen
-      'furniture': [
-        'https://images.pexels.com/photos/1350789/pexels-photo-1350789.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1571453/pexels-photo-1571453.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1080721/pexels-photo-1080721.jpeg?auto=compress&cs=tinysrgb&w=800'
+      furniture: [
+        "https://images.pexels.com/photos/1350789/pexels-photo-1350789.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1571453/pexels-photo-1571453.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1080721/pexels-photo-1080721.jpeg?auto=compress&cs=tinysrgb&w=800",
       ],
-      'appliance': [
-        'https://images.pexels.com/photos/4686822/pexels-photo-4686822.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/4686823/pexels-photo-4686823.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1599791/pexels-photo-1599791.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/4686824/pexels-photo-4686824.jpeg?auto=compress&cs=tinysrgb&w=800'
+      appliance: [
+        "https://images.pexels.com/photos/4686822/pexels-photo-4686822.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/4686823/pexels-photo-4686823.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1599791/pexels-photo-1599791.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/4686824/pexels-photo-4686824.jpeg?auto=compress&cs=tinysrgb&w=800",
       ],
-      
+
       // Beauty
-      'beauty': [
-        'https://images.pexels.com/photos/2113855/pexels-photo-2113855.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/3373736/pexels-photo-3373736.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/3762879/pexels-photo-3762879.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/2113856/pexels-photo-2113856.jpeg?auto=compress&cs=tinysrgb&w=800'
+      beauty: [
+        "https://images.pexels.com/photos/2113855/pexels-photo-2113855.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/3373736/pexels-photo-3373736.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/3762879/pexels-photo-3762879.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/2113856/pexels-photo-2113856.jpeg?auto=compress&cs=tinysrgb&w=800",
       ],
-      
+
       // Sports & Fitness
-      'fitness': [
-        'https://images.pexels.com/photos/416778/pexels-photo-416778.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1552242/pexels-photo-1552242.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/1552243/pexels-photo-1552243.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/416779/pexels-photo-416779.jpeg?auto=compress&cs=tinysrgb&w=800'
+      fitness: [
+        "https://images.pexels.com/photos/416778/pexels-photo-416778.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1552242/pexels-photo-1552242.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/1552243/pexels-photo-1552243.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/416779/pexels-photo-416779.jpeg?auto=compress&cs=tinysrgb&w=800",
       ],
-      
+
       // Books
-      'book': [
-        'https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/256541/pexels-photo-256541.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/159740/pexels-photo-159740.jpeg?auto=compress&cs=tinysrgb&w=800',
-        'https://images.pexels.com/photos/256542/pexels-photo-256542.jpeg?auto=compress&cs=tinysrgb&w=800'
-      ]
+      book: [
+        "https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/256541/pexels-photo-256541.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/159740/pexels-photo-159740.jpeg?auto=compress&cs=tinysrgb&w=800",
+        "https://images.pexels.com/photos/256542/pexels-photo-256542.jpeg?auto=compress&cs=tinysrgb&w=800",
+      ],
     };
 
     const lowerCategory = category.toLowerCase();
@@ -166,7 +172,10 @@ Return only the JSON array without any markdown formatting:
     return fallbackMap.monitor;
   }
 
-  async analyzeProductQuery(userQuery: string, availableProducts: any[]): Promise<{
+  async analyzeProductQuery(
+    userQuery: string,
+    availableProducts: any[]
+  ): Promise<{
     intent: string;
     category?: string;
     priceRange?: { min: number; max: number };
@@ -189,7 +198,9 @@ Please analyze and return a JSON response with:
 6. confidence (0-1 score)
 
 Available products for context:
-${availableProducts.map(p => `${p.name} - ${p.category} - ₹${p.price}`).join('\n')}
+${availableProducts
+  .map((p) => `${p.name} - ${p.category} - ₹${p.price}`)
+  .join("\n")}
 
 Return only valid JSON without any markdown formatting.
 `;
@@ -197,39 +208,43 @@ Return only valid JSON without any markdown formatting.
     try {
       const response = await this.generateResponse(prompt);
       // Clean the response to ensure it's valid JSON
-      const cleanResponse = response.replace(/```json\n?|\n?```/g, '').trim();
+      const cleanResponse = response.replace(/```json\n?|\n?```/g, "").trim();
       return JSON.parse(cleanResponse);
     } catch (error) {
-      console.error('Error analyzing query:', error);
+      console.error("Error analyzing query:", error);
       // Return fallback analysis
       return {
-        intent: 'search',
-        sentiment: 'neutral',
-        confidence: 0.5
+        intent: "search",
+        sentiment: "neutral",
+        confidence: 0.5,
       };
     }
   }
 
   async generateProductRecommendation(
-    userQuery: string, 
-    matchedProducts: any[], 
+    userQuery: string,
+    matchedProducts: any[],
     userPreferences?: any
   ): Promise<string> {
     const prompt = `
-You are ShopAI, an AI shopping assistant. Generate a helpful, concise response for this user query with clear, shoppable results.
+You are ShopWhiz, an AI shopping assistant. Generate a helpful, concise response for this user query with clear, shoppable results.
 
 User Query: "${userQuery}"
 
 Matched Products:
-${matchedProducts.map(p => `
+${matchedProducts
+  .map(
+    (p) => `
 - ${p.name} by ${p.brand}
   Price: ₹${p.price.toLocaleString()}
   Rating: ${p.rating}/5 (${p.reviewCount} reviews)
   Category: ${p.category}
-  Features: ${p.features.join(', ')}
-  Pros: ${p.pros.join(', ')}
-  Cons: ${p.cons.join(', ')}
-`).join('\n')}
+  Features: ${p.features.join(", ")}
+  Pros: ${p.pros.join(", ")}
+  Cons: ${p.cons.join(", ")}
+`
+  )
+  .join("\n")}
 
 Guidelines:
 - Be conversational and helpful like Amazon's product recommendations
@@ -245,29 +260,33 @@ Generate a personalized recommendation response:
     try {
       return await this.generateResponse(prompt);
     } catch (error) {
-      console.error('Error generating recommendation:', error);
+      console.error("Error generating recommendation:", error);
       return `I found ${matchedProducts.length} great products across different categories that match your search! From electronics to fashion, home essentials to beauty products - there's something for every need and budget.`;
     }
   }
 
   async generateQuizRecommendation(
-    quizAnswers: Array<{questionId: string, answer: string}>,
+    quizAnswers: Array<{ questionId: string; answer: string }>,
     matchedProducts: any[]
   ): Promise<string> {
     const prompt = `
 Based on the user's quiz responses, generate a personalized product recommendation like Amazon's personalized suggestions.
 
 Quiz Answers:
-${quizAnswers.map(a => `${a.questionId}: ${a.answer}`).join('\n')}
+${quizAnswers.map((a) => `${a.questionId}: ${a.answer}`).join("\n")}
 
 Recommended Products:
-${matchedProducts.map(p => `
+${matchedProducts
+  .map(
+    (p) => `
 - ${p.name} by ${p.brand}
   Price: ₹${p.price.toLocaleString()}
   Rating: ${p.rating}/5
   Category: ${p.category}
-  Features: ${p.features.join(', ')}
-`).join('\n')}
+  Features: ${p.features.join(", ")}
+`
+  )
+  .join("\n")}
 
 Generate a personalized response that:
 - References their quiz preferences
@@ -282,27 +301,31 @@ Response:
     try {
       return await this.generateResponse(prompt);
     } catch (error) {
-      console.error('Error generating quiz recommendation:', error);
+      console.error("Error generating quiz recommendation:", error);
       return `Based on your preferences, I've found some perfect products across multiple categories! Here are my top recommendations that match your style and budget:`;
     }
   }
 
   async generateProductComparison(products: any[]): Promise<string> {
-    if (products.length < 2) return '';
+    if (products.length < 2) return "";
 
     const prompt = `
 Compare these products and provide a helpful analysis like Amazon's comparison feature:
 
-${products.map((p, i) => `
+${products
+  .map(
+    (p, i) => `
 Product ${i + 1}: ${p.name}
 - Brand: ${p.brand}
 - Price: ₹${p.price.toLocaleString()}
 - Rating: ${p.rating}/5
 - Category: ${p.category}
-- Features: ${p.features.join(', ')}
-- Pros: ${p.pros.join(', ')}
-- Cons: ${p.cons.join(', ')}
-`).join('\n')}
+- Features: ${p.features.join(", ")}
+- Pros: ${p.pros.join(", ")}
+- Cons: ${p.cons.join(", ")}
+`
+  )
+  .join("\n")}
 
 Provide a comparison that:
 - Highlights key differences across categories if different
@@ -317,8 +340,8 @@ Comparison:
     try {
       return await this.generateResponse(prompt);
     } catch (error) {
-      console.error('Error generating comparison:', error);
-      return 'Here are the products side by side for easy comparison. Each offers unique value across different categories and price points.';
+      console.error("Error generating comparison:", error);
+      return "Here are the products side by side for easy comparison. Each offers unique value across different categories and price points.";
     }
   }
 }

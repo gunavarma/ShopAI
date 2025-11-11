@@ -28,10 +28,22 @@ export interface EnhancedRealtimeProduct {
     reviewer: string;
     date: string;
   }>;
-  source: 'google_shopping' | 'amazon' | 'ai_generated';
+  source: 'google_shopping' | 'amazon' | 'ai_generated' | 'flipkart' | 'croma' | 'reliance' | 'direct';
   productUrl?: string;
   seller?: string;
   shipping?: string;
+}
+
+interface FreeSearchProduct {
+  title: string;
+  price: number;
+  image: string;
+  url: string;
+  source: 'flipkart' | 'croma' | 'reliance';
+  rating?: number;
+  reviewCount?: number;
+  availability?: string;
+  brand?: string;
 }
 
 export class EnhancedRealtimeProductService {
@@ -45,12 +57,152 @@ export class EnhancedRealtimeProductService {
     const { useRealData = true, maxResults = 8 } = options;
 
     try {
+      // If the query is a direct URL, scrape it for real product details
+      if (/^https?:\/\//i.test(query.trim())) {
+        const detail = await this.fetchDetailsFromUrl(query.trim());
+        if (detail) {
+          const firstImage = Array.isArray(detail.images) ? detail.images[0] : undefined;
+          return [
+            {
+              id: `url_${Date.now()}`,
+              name: detail.title || query,
+              price: typeof detail.price === 'number' ? detail.price : 0,
+              originalPrice: undefined,
+              image: firstImage || this.getProductImage('product'),
+              rating: detail.rating || 0,
+              reviewCount: detail.reviewCount || 0,
+              brand: detail.brand || 'Unknown',
+              category: this.extractCategoryFromTitle(detail.title || ''),
+              features: Object.entries(detail.specs || {})
+                .slice(0, 5)
+                .map(([key, value]) => `${key}: ${value}`),
+              pros: [],
+              cons: [],
+              sentiment:
+                detail.rating && detail.rating < 3
+                  ? 'negative'
+                  : detail.rating && detail.rating < 4
+                  ? 'neutral'
+                  : 'positive',
+              sentimentScore: detail.rating
+                ? Math.min(100, Math.round((detail.rating / 5) * 100))
+                : 75,
+              description: detail.description || detail.title || '',
+              inStock: !detail.availability
+                ? true
+                : !detail.availability.toLowerCase().includes('outofstock'),
+              availability: detail.availability || 'In Stock',
+              specifications: detail.specs || {},
+              youtubeVideoId: undefined,
+              reviewSummary:
+                (detail.sampleReviews && detail.sampleReviews[0]?.text) ||
+                detail.description ||
+                'Product details fetched from source.',
+              sampleReviews:
+                detail.sampleReviews?.map((rev: any) => ({
+                  rating: typeof rev.rating === 'number' ? rev.rating : 0,
+                  text: rev.text || '',
+                  reviewer: rev.reviewer || '',
+                  date: rev.date || '',
+                })) || [],
+              source: 'direct',
+              productUrl: query,
+              seller: detail.seller,
+              shipping: undefined,
+            }
+          ];
+        }
+      }
+
       let scrapedProducts: ScrapedProduct[] = [];
       
       // First, try to get real product data if API key is available
-      if (useRealData && process.env.NEXT_PUBLIC_SCRAPER_API_KEY) {
-        console.log('Fetching real product data for:', query);
-        scrapedProducts = await this.fetchFromAPI(query, options);
+      if (useRealData) {
+        if (process.env.NEXT_PUBLIC_SCRAPER_API_KEY) {
+          console.log('Fetching real product data (paid) for:', query);
+          scrapedProducts = await this.fetchFromAPI(query, options);
+        } else {
+          console.log('Fetching real product data (free) for:', query);
+          const free = await this.fetchFromFreeSearch(query, options.maxResults || 8);
+          if (free.length > 0) {
+            const enriched = await Promise.all(
+              free.map(async (p: FreeSearchProduct, idx: number) => {
+                const detail = await this.fetchDetailsFromUrl(p.url);
+                const detailImages = detail?.images || [];
+                const image =
+                  (Array.isArray(detailImages) && detailImages[0]) ||
+                  p.image ||
+                  this.getProductImage('product');
+                const price =
+                  typeof detail?.price === 'number' ? detail.price : p.price;
+                const specs: Record<string, string> = detail?.specs || {};
+                const rating =
+                  typeof detail?.rating === 'number'
+                    ? detail.rating
+                    : typeof p.rating === 'number'
+                    ? p.rating
+                    : 0;
+                const reviewCount =
+                  typeof detail?.reviewCount === 'number'
+                    ? detail.reviewCount
+                    : typeof p.reviewCount === 'number'
+                    ? p.reviewCount
+                    : 0;
+                const availability = detail?.availability || p.availability || 'In Stock';
+                const name = detail?.title || p.title;
+                const brand = detail?.brand || p.brand || 'Unknown';
+                const description = detail?.description || p.title;
+                const sampleReviews =
+                  detail?.sampleReviews?.map((rev: any) => ({
+                    rating: typeof rev.rating === 'number' ? rev.rating : 0,
+                    text: rev.text || '',
+                    reviewer: rev.reviewer || '',
+                    date: rev.date || '',
+                  })) || [];
+                const reviewSummary =
+                  sampleReviews[0]?.text ||
+                  description ||
+                  `Product from ${p.source}`;
+                const sentiment =
+                  rating < 3 ? 'negative' : rating < 4 ? 'neutral' : 'positive';
+                const sentimentScore = rating
+                  ? Math.min(100, Math.round((rating / 5) * 100))
+                  : 75;
+
+                return {
+                  id: `${p.source}_${idx}_${Date.now()}`,
+                  name,
+                  price,
+                  originalPrice: undefined,
+                  image,
+                  rating,
+                  reviewCount,
+                  brand,
+                  category: this.extractCategoryFromTitle(name),
+                  features: Object.entries(specs)
+                    .slice(0, 5)
+                    .map(([key, value]) => `${key}: ${value}`),
+                  pros: [],
+                  cons: [],
+                  sentiment,
+                  sentimentScore,
+                  description,
+                  inStock: !availability.toLowerCase().includes('outofstock'),
+                  availability,
+                  specifications: specs,
+                  youtubeVideoId: undefined,
+                  reviewSummary,
+                  sampleReviews,
+                  source: p.source,
+                  productUrl: p.url,
+                  seller: detail?.seller,
+                  shipping: undefined,
+                } as EnhancedRealtimeProduct;
+              })
+            );
+            return enriched;
+          }
+        }
       }
 
       // If we have real data, enhance it with AI
@@ -59,7 +211,12 @@ export class EnhancedRealtimeProductService {
         return await this.enhanceScrapedProducts(scrapedProducts, query);
       }
 
-      // Fallback to AI-generated products if no real data
+      // If user requested real data, do NOT fallback to AI
+      if (useRealData) {
+        console.log('No real data available; returning empty results to avoid AI-generated content.');
+        return [];
+      }
+      // Otherwise, allow AI fallback when explicitly desired
       console.log('No real data available, generating AI products for:', query);
       return await this.generateAIProducts(query, maxResults);
 
@@ -96,6 +253,24 @@ export class EnhancedRealtimeProductService {
       return data.products || [];
     } catch (error) {
       console.error('Error fetching from API:', error);
+      return [];
+    }
+  }
+
+  private static async fetchFromFreeSearch(query: string, maxResults: number): Promise<FreeSearchProduct[]> {
+    try {
+      const response = await fetch('/api/search-free', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, maxResults })
+      });
+      if (!response.ok) return [];
+      const data = await response.json();
+      const products = (data.products || []) as FreeSearchProduct[];
+      return products.filter(
+        (p) => p && typeof p.title === 'string' && typeof p.url === 'string'
+      );
+    } catch {
       return [];
     }
   }
@@ -209,6 +384,23 @@ Return only valid JSON:
     } catch (error) {
       console.error('Error enhancing scraped products:', error);
       return this.createBasicEnhancedProducts(scrapedProducts);
+    }
+  }
+
+  private static async fetchDetailsFromUrl(url: string): Promise<any | null> {
+    try {
+      const response = await fetch('/api/scrape-url', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ url })
+      });
+      if (!response.ok) return null;
+      const json = await response.json();
+      return json?.data || null;
+    } catch {
+      return null;
     }
   }
 
