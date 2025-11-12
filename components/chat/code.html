@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Shopwhiz - AI-Powered Shopping</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#973bed",
+            "background-light": "#f7f6f8",
+            "background-dark": "#191121",
+          },
+          fontFamily: {
+            "display": ["Inter", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.5rem",
+            "lg": "1rem",
+            "xl": "1.5rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      background: linear-gradient(135deg, #EAF2FF 0%, #F3E8FF 50%, #FFF7F0 100%);
+    }
+    .glassmorphism {
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .gradient-accent {
+      background: linear-gradient(90deg, #2563EB, #7C3AED, #9333EA);
+    }
+  </style>
+</head>
+<body class="font-display text-gray-800">
+<div class="relative min-h-screen w-full flex flex-col">
+<!-- Sticky Top Navigation Bar -->
+<header class="sticky top-0 z-50 w-full px-8 py-3 glassmorphism">
+<div class="max-w-screen-2xl mx-auto flex items-center justify-between gap-8">
+<div class="flex items-center gap-2">
+<svg class="h-8 w-8 text-[#151118]" fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M44 4H30.6666V17.3334H17.3334V30.6666H4V44H44V4Z" fill="currentColor"></path>
+</svg>
+<h2 class="text-2xl font-bold leading-tight tracking-[-0.015em] text-[#151118]">Shopwhiz</h2>
+</div>
+<div class="flex-1 max-w-2xl">
+<label class="flex w-full items-center rounded-full h-12 bg-white/60 shadow-sm focus-within:ring-2 focus-within:ring-primary focus-within:ring-opacity-50">
+<div class="text-gray-500 flex items-center justify-center pl-5">
+<span class="material-symbols-outlined">spark</span>
+</div>
+<input class="form-input flex-1 w-full min-w-0 resize-none overflow-hidden rounded-full text-[#151118] focus:outline-0 focus:ring-0 border-none bg-transparent h-full placeholder:text-gray-500 px-4 text-base" placeholder="Ask or search anything — e.g., ‘patterned puffer jackets’" value=""/>
+</label>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-white/50 text-[#151118] hover:bg-white/80 transition-colors">
+<span class="material-symbols-outlined">language</span>
+</button>
+<button class="flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-white/50 text-[#151118] hover:bg-white/80 transition-colors">
+<span class="material-symbols-outlined">shopping_cart</span>
+</button>
+<button class="flex h-10 w-10 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-white/50 text-[#151118] hover:bg-white/80 transition-colors">
+<span class="material-symbols-outlined">person</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="flex-grow w-full max-w-screen-2xl mx-auto px-8 py-6">
+<div class="grid grid-cols-12 gap-8">
+<!-- Left Column: Side Navigation -->
+<aside class="col-span-2">
+<div class="sticky top-28">
+<nav class="flex flex-col gap-2 p-2">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/50 transition-colors" href="#">
+<span class="material-symbols-outlined text-[#151118]">bookmark</span>
+<p class="text-[#151118] text-base font-medium">Saved</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/50 transition-colors" href="#">
+<span class="material-symbols-outlined text-[#151118]">package_2</span>
+<p class="text-[#151118] text-base font-medium">Orders</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/60 shadow-sm" href="#">
+<span class="material-symbols-outlined text-[#151118]">sell</span>
+<p class="text-[#151118] text-base font-medium">Deals</p>
+</a>
+</nav>
+</div>
+</aside>
+<!-- Center Column: Products -->
+<div class="col-span-7 flex flex-col gap-6">
+<!-- Filter Chips -->
+<div class="flex gap-3 items-center overflow-x-auto [-ms-scrollbar-style:none] [scrollbar-width:none] [&amp;::-webkit-scrollbar]:hidden">
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full px-4 text-white gradient-accent shadow-md">
+<p class="text-sm font-semibold">Category</p>
+<span class="material-symbols-outlined text-base">expand_more</span>
+</button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white/60 px-4 hover:bg-white/90 transition-colors shadow-sm">
+<p class="text-[#151118] text-sm font-medium">Rating</p>
+<span class="material-symbols-outlined text-base text-[#151118]">expand_more</span>
+</button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white/60 px-4 hover:bg-white/90 transition-colors shadow-sm">
+<p class="text-[#151118] text-sm font-medium">Gender</p>
+<span class="material-symbols-outlined text-base text-[#151118]">expand_more</span>
+</button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white/60 px-4 hover:bg-white/90 transition-colors shadow-sm">
+<p class="text-[#151118] text-sm font-medium">Size</p>
+<span class="material-symbols-outlined text-base text-[#151118]">expand_more</span>
+</button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white/60 px-4 hover:bg-white/90 transition-colors shadow-sm">
+<p class="text-[#151118] text-sm font-medium">Color</p>
+<span class="material-symbols-outlined text-base text-[#151118]">expand_more</span>
+</button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white/60 px-4 hover:bg-white/90 transition-colors shadow-sm">
+<p class="text-[#151118] text-sm font-medium">Price</p>
+<span class="material-symbols-outlined text-base text-[#151118]">expand_more</span>
+</button>
+<button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-full bg-white/60 px-4 hover:bg-white/90 transition-colors shadow-sm">
+<p class="text-[#151118] text-sm font-medium">Sort</p>
+<span class="material-symbols-outlined text-base text-[#151118]">swap_vert</span>
+</button>
+</div>
+<!-- Brand Carousel -->
+<div class="flex overflow-x-auto [-ms-scrollbar-style:none] [scrollbar-width:none] [&amp;::-webkit-scrollbar]:hidden py-2">
+<div class="flex items-stretch gap-4">
+<div class="flex flex-col items-center gap-2 p-3 rounded-xl min-w-24 glassmorphism hover:shadow-lg transition-shadow">
+<div class="w-16 h-16 bg-center bg-no-repeat aspect-square bg-cover rounded-full" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB4f1YzZduq408YzZoZwGtNi89N2_zkA6wgabzmbNcjos5vZ9eDmrV9R5DPVtSrGPSvr9cSYBjpPuOp9-yox6dJtHSeH8SmJYXHeSD1IE43sHnd9_6bXFxi9hpg54u6cL2ZqqFlVODgAhTcPiN2SLbVI-x1MuntIi8hyMO6cYQQ9aGk4AmJzfxo1wwqn3e7OPhGDre0o_GT6rVvHVdvHyIBYGu6MvT6EC6utT8LPNjvFlDeQBdXpmkGWVIFnfXV8gXEBk-JwxznGqfk");'></div>
+<p class="text-[#151118] text-sm font-medium">4.8 ★</p>
+</div>
+<div class="flex flex-col items-center gap-2 p-3 rounded-xl min-w-24 glassmorphism hover:shadow-lg transition-shadow">
+<div class="w-16 h-16 bg-center bg-no-repeat aspect-square bg-cover rounded-full" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB4f1YzZduq408YzZoZwGtNi89N2_zkA6wgabzmbNcjos5vZ9eDmrV9R5DPVtSrGPSvr9cSYBjpPuOp9-yox6dJtHSeH8SmJYXHeSD1IE43sHnd9_6bXFxi9hpg54u6cL2ZqqFlVODgAhTcPiN2SLbVI-x1MuntIi8hyMO6cYQQ9aGk4AmJzfxo1wwqn3e7OPhGDre0o_GT6rVvHVdvHyIBYGu6MvT6EC6utT8LPNjvFlDeQBdXpmkGWVIFnfXV8gXEBk-JwxznGqfk");'></div>
+<p class="text-[#151118] text-sm font-medium">4.7 ★</p>
+</div>
+<div class="flex flex-col items-center gap-2 p-3 rounded-xl min-w-24 glassmorphism hover:shadow-lg transition-shadow">
+<div class="w-16 h-16 bg-center bg-no-repeat aspect-square bg-cover rounded-full" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB4f1YzZduq408YzZoZwGtNi89N2_zkA6wgabzmbNcjos5vZ9eDmrV9R5DPVtSrGPSvr9cSYBjpPuOp9-yox6dJtHSeH8SmJYXHeSD1IE43sHnd9_6bXFxi9hpg54u6cL2ZqqFlVODgAhTcPiN2SLbVI-x1MuntIi8hyMO6cYQQ9aGk4AmJzfxo1wwqn3e7OPhGDre0o_GT6rVvHVdvHyIBYGu6MvT6EC6utT8LPNjvFlDeQBdXpmkGWVIFnfXV8gXEBk-JwxznGqfk");'></div>
+<p class="text-[#151118] text-sm font-medium">4.5 ★</p>
+</div>
+<div class="flex flex-col items-center gap-2 p-3 rounded-xl min-w-24 glassmorphism hover:shadow-lg transition-shadow">
+<div class="w-16 h-16 bg-center bg-no-repeat aspect-square bg-cover rounded-full" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB4f1YzZduq408YzZoZwGtNi89N2_zkA6wgabzmbNcjos5vZ9eDmrV9R5DPVtSrGPSvr9cSYBjpPuOp9-yox6dJtHSeH8SmJYXHeSD1IE43sHnd9_6bXFxi9hpg54u6cL2ZqqFlVODgAhTcPiN2SLbVI-x1MuntIi8hyMO6cYQQ9aGk4AmJzfxo1wwqn3e7OPhGDre0o_GT6rVvHVdvHyIBYGu6MvT6EC6utT8LPNjvFlDeQBdXpmkGWVIFnfXV8gXEBk-JwxznGqfk");'></div>
+<p class="text-[#151118] text-sm font-medium">4.4 ★</p>
+</div>
+<div class="flex flex-col items-center gap-2 p-3 rounded-xl min-w-24 glassmorphism hover:shadow-lg transition-shadow">
+<div class="w-16 h-16 bg-center bg-no-repeat aspect-square bg-cover rounded-full" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB4f1YzZduq408YzZoZwGtNi89N2_zkA6wgabzmbNcjos5vZ9eDmrV9R5DPVtSrGPSvr9cSYBjpPuOp9-yox6dJtHSeH8SmJYXHeSD1IE43sHnd9_6bXFxi9hpg54u6cL2ZqqFlVODgAhTcPiN2SLbVI-x1MuntIi8hyMO6cYQQ9aGk4AmJzfxo1wwqn3e7OPhGDre0o_GT6rVvHVdvHyIBYGu6MvT6EC6utT8LPNjvFlDeQBdXpmkGWVIFnfXV8gXEBk-JwxznGqfk");'></div>
+<p class="text-[#151118] text-sm font-medium">4.9 ★</p>
+</div>
+<div class="flex flex-col items-center gap-2 p-3 rounded-xl min-w-24 glassmorphism hover:shadow-lg transition-shadow">
+<div class="w-16 h-16 bg-center bg-no-repeat aspect-square bg-cover rounded-full" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuB4f1YzZduq408YzZoZwGtNi89N2_zkA6wgabzmbNcjos5vZ9eDmrV9R5DPVtSrGPSvr9cSYBjpPuOp9-yox6dJtHSeH8SmJYXHeSD1IE43sHnd9_6bXFxi9hpg54u6cL2ZqqFlVODgAhTcPiN2SLbVI-x1MuntIi8hyMO6cYQQ9aGk4AmJzfxo1wwqn3e7OPhGDre0o_GT6rVvHVdvHyIBYGu6MvT6EC6utT8LPNjvFlDeQBdXpmkGWVIFnfXV8gXEBk-JwxznGqfk");'></div>
+<p class="text-[#151118] text-sm font-medium">4.7 ★</p>
+</div>
+</div>
+</div>
+<!-- Inline Comparison -->
+<div class="flex items-center gap-4 p-4 rounded-xl glassmorphism shadow-sm">
+<div class="flex-1 flex flex-col gap-2 p-2 rounded-lg bg-white/30 relative">
+<div class="w-full bg-center bg-no-repeat aspect-[3/4] bg-cover rounded-lg" data-alt="A person wearing a stylish patterned puffer jacket in a snowy environment." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBGFV3kcV7nYNfM7n81EoJrmgPa9-YnxkQ_-5y8VMF6oG-n8FzC70PjWfjj-Bgs6HtbX1B8GC9etBOPrewicW7M9E78h_5j37tloDEX77P7w-kly1UDZMp_Y5fSpr1Zqwd2gqWs8V34CNFnFLaec52KJPKNfMdXoNQa7SPi9-vNkNyCrNXLZZS1o7O1w3DEeSm4YnZUYP5s6rEywUpNkZQ1k67V41-eCjxC70PFmChBQuOVKB8RGp6Vqpr8-FkQJ98HmDfjlsB2FuzX");'></div>
+<div>
+<p class="font-semibold">Patterned Puffer Jacket</p>
+<p class="text-sm text-gray-600">$129.99, 4.5 ★ (120)</p>
+</div>
+</div>
+<div class="flex flex-col items-center gap-2">
+<p class="text-lg font-bold">vs</p>
+<button class="text-white text-sm font-semibold py-2 px-4 rounded-full gradient-accent shadow-lg hover:shadow-xl transition-shadow">Compare</button>
+</div>
+<div class="flex-1 flex flex-col gap-2 p-2 rounded-lg bg-white/30 relative">
+<div class="w-full bg-center bg-no-repeat aspect-[3/4] bg-cover rounded-lg" data-alt="A different stylish puffer jacket, this one in a solid color, shown outdoors." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAPQuDtTyAREgkItsnAaCAZRDzj6QGfEAuCl19UB7nRQ6m6bR8yj0xr1dBeYJYVEDyMIst8X3ip6OmToJ0LTcATAyWN9eCgkZnxQ9Q1eWbdVnZy6kmIquzTKcnKyB41WhmTDCw_fHKRTrVIVzh9RiL2l-tHcJO0_nKRaFsTq-RXDIe9s1ZUX9xly7wHu56xaLTkY6DGqnC_3U9kjc0xejhHjPSpnkry6WWAGtomcevzPLTJngTdRItblEcBkhAB7l57kBMdDpr1Y5B-");'></div>
+<div>
+<p class="font-semibold">Solid Color Puffer</p>
+<p class="text-sm text-gray-600">$119.99, 4.6 ★ (150)</p>
+</div>
+</div>
+</div>
+<!-- Product Grid -->
+<div class="grid grid-cols-3 gap-6">
+<div class="flex flex-col gap-3 group">
+<div class="relative w-full bg-center bg-no-repeat aspect-[3/4] bg-cover rounded-xl shadow-md transition-transform duration-300 group-hover:scale-105" data-alt="A person wearing a pair of retro high-top sneakers." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBljcJz1Gbi4imjE3cmJ91E35I1jSGBLyqtXYWrLjQtiJQSbJp7HRvLedDXk5su9wti8bqRWsnJ9AOh0u5XoJMPcBz_KQzUFUWoBC2zYX3KwgdzU6p5UPpiW2zumRlMTSHqA3Jej_C1qK73zOy8sIQg6d195VVZCMYTT5srFfcsZg2ClTuP4lMmgK8XQZGbhYaRcDrtP10-W5onqne1qUeWm1Q5aON1BUHSK3n39tF_ML7Dq-WfoYCHOFO3kubSPba1aGwMkJHkHgTU");'>
+<button class="absolute top-3 right-3 h-8 w-8 flex items-center justify-center rounded-full bg-white/50 backdrop-blur-sm text-gray-800 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-xl">favorite_border</span>
+</button>
+</div>
+<div>
+<p class="font-semibold text-[#151118]">Retro High-Top Sneakers</p>
+<p class="text-sm text-gray-600">Brand B</p>
+<p class="text-sm text-gray-600">$89.99, 4.8 ★ (345)</p>
+</div>
+</div>
+<div class="flex flex-col gap-3 group">
+<div class="relative w-full bg-center bg-no-repeat aspect-[3/4] bg-cover rounded-xl shadow-md transition-transform duration-300 group-hover:scale-105" data-alt="A soft, comfortable-looking organic cotton hoodie." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBneAHlJeaMmi8mek63qAuQ2-7sO8OeZv7LstWXxNWju34CURfuANVIilMxniLXrHC_a7Ed5k-sUIWGOl6_UomkkodpClNB7dJs6Wfwe6RgVnSUgrE_H9e9f7TtZfUi4uW-gglOPf2ZqkF_B5L6ISwgRfq1hsmgfHeaF5gTfYQtXGyz8tnssNceyMRqm3-GALhoBLCfLsL9TY47X8INtLuA7ejr-9q4oqKvohIoy0QtjNC4aT7rYd6hl5cQUn-aH7ZADnU48p3045h_");'>
+<div class="absolute top-3 left-3 bg-yellow-300 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full">AI Recommended</div>
+<button class="absolute top-3 right-3 h-8 w-8 flex items-center justify-center rounded-full bg-white/50 backdrop-blur-sm text-gray-800 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-xl">favorite</span>
+</button>
+</div>
+<div>
+<p class="font-semibold text-[#151118]">Organic Cotton Hoodie</p>
+<p class="text-sm text-gray-600">Brand C</p>
+<p class="text-sm text-gray-600">$65.00, 4.7 ★ (210)</p>
+</div>
+</div>
+<div class="flex flex-col gap-3 group">
+<div class="relative w-full bg-center bg-no-repeat aspect-[3/4] bg-cover rounded-xl shadow-md transition-transform duration-300 group-hover:scale-105" data-alt="A close-up of a modern smart fitness watch on a wrist." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAILQ1aeZrHM6Lfw5TEIqBhu7N-oFptM0tWS1_MzPVga1BtfcxE_M-MCMQ2eUoQfdG3U4ab9I60jr977notm6h1HnmTreh10XPqDjj_Cyrrq5sHX_pX8-EFs4WrsEea72IXcjQa6NVXvK9hUevbqr8L9Gti2zKzhi7uFN07n_Vhj2P5Pu9PfpkrqSDAwT8IwdmFBxiDY-GlBW0v5jK4--sD4JdZI-mXC4rIXiiYBgJd_sIP36qcvSAdoWxkTOA395ud91q5ZZp2YBXl");'>
+<button class="absolute top-3 right-3 h-8 w-8 flex items-center justify-center rounded-full bg-white/50 backdrop-blur-sm text-gray-800 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-xl">favorite_border</span>
+</button>
+</div>
+<div>
+<p class="font-semibold text-[#151118]">Smart Fitness Watch</p>
+<p class="text-sm text-gray-600">Brand D</p>
+<p class="text-sm text-gray-600">$199.99, 4.9 ★ (550)</p>
+</div>
+</div>
+<div class="flex flex-col gap-3 group">
+<div class="relative w-full bg-center bg-no-repeat aspect-[3/4] bg-cover rounded-xl shadow-md transition-transform duration-300 group-hover:scale-105" data-alt="A stylish pair of wireless noise-cancelling headphones." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAMTWrfVuCufRRGWWPbYUmJchIID9LqVMcKs8CnJ60TH-lVuyWsKYaLpFkfaOtYVgPAhHLv1sQiTwwEnI06ONQ1cqZJGC921d7Bwuoiq_HkZJKfXgYFncspOIcQba9Jatg605BoJLV6Stivded6YIMv7KK6fvdICZeUFL9sjVAzfmbECK5-uOBzPJHwEwemQGaOMWnj1pXP_K3bDUjgKpiYxisUtMWyaM8p73odFge3O68_3C43vfac56e_cs0Y6BWSAUBihHdZk95j");'>
+<button class="absolute top-3 right-3 h-8 w-8 flex items-center justify-center rounded-full bg-white/50 backdrop-blur-sm text-gray-800 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-xl">favorite_border</span>
+</button>
+</div>
+<div>
+<p class="font-semibold text-[#151118]">Wireless Noise-Cancelling Headphones</p>
+<p class="text-sm text-gray-600">Brand E</p>
+<p class="text-sm text-gray-600">$249.00, 4.8 ★ (890)</p>
+</div>
+</div>
+<div class="flex flex-col gap-3 group">
+<div class="relative w-full bg-center bg-no-repeat aspect-[3/4] bg-cover rounded-xl shadow-md transition-transform duration-300 group-hover:scale-105" data-alt="A minimalist leather backpack suitable for daily use." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuC9RIqu3wUbFOOzcG6LHbXbTWefpdAf9xkEQ4RFYxBy03Sdp27IxWZfEsOCHeCmWHKMGPsYiEzXBnW_qT_QHTw6XjSwTpPPqYnSpKTEBy7UBDejPd1ALTlJq-ycNi3BcgQ59xCxWJ3w3VY3Fs4OEkgdJR2BkGXbbHRUPUA-KgWFGOFPKQf59_8xQ0a2yNLYM-zB7tF14thIoUinJ28dN4THjbRZDi9BWATMBX6eaz7vqdP5XsSIIVCU-s7VHK2ayB7TBysMzNrBSKYo");'>
+<button class="absolute top-3 right-3 h-8 w-8 flex items-center justify-center rounded-full bg-white/50 backdrop-blur-sm text-gray-800 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-xl">favorite_border</span>
+</button>
+</div>
+<div>
+<p class="font-semibold text-[#151118]">Minimalist Leather Backpack</p>
+<p class="text-sm text-gray-600">Brand F</p>
+<p class="text-sm text-gray-600">$150.00, 4.6 ★ (95)</p>
+</div>
+</div>
+<div class="flex flex-col gap-3 group">
+<div class="relative w-full bg-center bg-no-repeat aspect-[3/4] bg-cover rounded-xl shadow-md transition-transform duration-300 group-hover:scale-105" data-alt="A person wearing a light and airy linen summer dress." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAHQjnVaIBIb2Iaa0vAYrxwNL_FG7FfmI4Nr1NScnjTb5-E-6OW17dlos-T_3qdR9Mgox-Ihbt6JQTi37XWaS76dnPACr2r7PBPOGryoU88m7COy9SblWx2QRpDiYzD9KGhxwKs_NX99hsEfjbtMj8egq6pjsZsYl7Pdf9i44-kIBUscCuOja4RvMFQXFLGPMB3miZ9Fzc9A9Gbvg7jXwxQEje9Ch1sMHEkTYjxGES8bIafQJU8e1H54ffNP2mGcc4_Ig8Fi06H7Ekq");'>
+<div class="absolute top-3 left-3 bg-yellow-300 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full">AI Recommended</div>
+<button class="absolute top-3 right-3 h-8 w-8 flex items-center justify-center rounded-full bg-white/50 backdrop-blur-sm text-gray-800 hover:text-red-500 transition-colors">
+<span class="material-symbols-outlined text-xl">favorite</span>
+</button>
+</div>
+<div>
+<p class="font-semibold text-[#151118]">Linen Summer Dress</p>
+<p class="text-sm text-gray-600">Brand G</p>
+<p class="text-sm text-gray-600">$75.00, 4.5 ★ (150)</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: AI Chat Panel -->
+<aside class="col-span-3">
+<div class="sticky top-28 h-[calc(100vh-8.5rem)] flex flex-col glassmorphism rounded-xl shadow-lg">
+<div class="p-4 border-b border-white/20">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full gradient-accent flex items-center justify-center">
+<span class="material-symbols-outlined text-white">smart_toy</span>
+</div>
+<h3 class="text-lg font-bold text-[#151118]">AI-Powered Shopping</h3>
+</div>
+</div>
+<div class="flex-grow p-4 overflow-y-auto space-y-6">
+<!-- User Message -->
+<div class="flex justify-end">
+<div class="bg-blue-100 text-blue-900 p-3 rounded-lg max-w-xs">
+<p>Show me waterproof boots under $150</p>
+</div>
+</div>
+<!-- AI Message -->
+<div class="flex justify-start">
+<div class="bg-white/70 p-3 rounded-lg max-w-xs">
+<p>Of course! 👢 Here are a few top-rated options I found for you:</p>
+</div>
+</div>
+<!-- AI Embedded Product -->
+<div class="flex justify-start">
+<div class="bg-white/70 p-3 rounded-lg flex gap-3 w-full max-w-xs">
+<div class="w-16 h-20 bg-center bg-no-repeat bg-cover rounded-md" data-alt="A sturdy waterproof boot." style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBMd12EbyAmw_JoVkOV7mpCQ0JOWDHVollOqaNV0Q-f3GMb31Sy9T0LNX86SnGxi5uhnLC6WthhXW_o9mJ4nHsojRMXt8kcKlm4U0TaFxS0pa0QTE75KAqFZxGfiOHwbK5IOEv3T1TbFEr9FPUiT_lLPYTR3WlpM_y1irEGengnaecYQMWOHkRi8hQtaBBsRvAxUbo03S4qMKaO3nbiq4Dlf84YaPutpf9gJV_bZqeXsvk-lKjXA-qUlLnU8R7IJSnQCdH8DgKRh4Qi")'></div>
+<div class="flex-1">
+<p class="font-semibold text-sm">Terra Hiker Boot</p>
+<p class="text-xs text-gray-600">$135.00</p>
+<p class="text-xs text-gray-600">4.8 ★ (420)</p>
+</div>
+</div>
+</div>
+<!-- AI Quick Actions -->
+<div class="flex justify-start">
+<div class="bg-white/70 p-3 rounded-lg max-w-xs space-y-2">
+<p>What would you like to do next?</p>
+<div class="flex gap-2">
+<button class="text-xs font-semibold py-1 px-3 rounded-full border border-gray-300 hover:bg-gray-100">Compare</button>
+<button class="text-xs font-semibold py-1 px-3 rounded-full border border-gray-300 hover:bg-gray-100">Find Cheaper</button>
+<button class="text-xs font-semibold py-1 px-3 rounded-full border border-blue-500 bg-blue-100 text-blue-800 hover:bg-blue-200">Add to Cart</button>
+</div>
+</div>
+</div>
+<!-- Generate Image CTA -->
+<button class="w-full flex items-center justify-center gap-2 py-3 rounded-lg text-white font-semibold gradient-accent shadow-lg hover:shadow-xl transition-shadow">
+<span class="material-symbols-outlined">auto_awesome</span>
+                Generate Image
+              </button>
+</div>
+<div class="p-3 border-t border-white/20">
+<div class="flex items-center rounded-lg bg-white/70 h-12 shadow-inner-sm focus-within:ring-2 focus-within:ring-primary focus-within:ring-opacity-50">
+<input class="form-input flex-1 w-full h-full bg-transparent border-none focus:ring-0 placeholder:text-gray-500 px-4" placeholder="Ask Shopwhiz anything..."/>
+<button class="p-3 text-gray-600 hover:text-primary transition-colors"><span class="material-symbols-outlined">mic</span></button>
+<button class="p-3 text-gray-600 hover:text-primary transition-colors"><span class="material-symbols-outlined">magic_button</span></button>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full mt-10 p-6 bg-gradient-to-t from-gray-900/40 to-transparent">
+<div class="max-w-screen-2xl mx-auto flex justify-between items-center text-sm text-gray-800">
+<p>© 2024 Shopwhiz, Inc. All rights reserved.</p>
+<div class="flex items-center gap-6">
+<a class="hover:underline" href="#">Support</a>
+<a class="hover:underline" href="#">Privacy Policy</a>
+<div class="flex gap-4">
+<a class="text-gray-600 hover:text-gray-900" href="#">
+<svg class="h-5 w-5" fill="currentColor" viewbox="0 0 24 24"><path d="M22.46 6c-.77.35-1.6.58-2.46.67.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98-3.56-.18-6.72-1.89-8.84-4.48-.37.63-.58 1.37-.58 2.15 0 1.49.76 2.8 1.91 3.56-.71 0-1.37-.22-1.95-.55v.05c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.52 8.52 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21c7.34 0 11.35-6.08 11.35-11.35 0-.17 0-.34-.01-.51.78-.57 1.45-1.28 1.98-2.08z"></path></svg>
+</a>
+<a class="text-gray-600 hover:text-gray-900" href="#">
+<svg class="h-5 w-5" fill="currentColor" viewbox="0 0 24 24"><path clip-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12c0-5.523-4.477-10-10-10z" fill-rule="evenodd"></path></svg>
+</a>
+</div>
+</div>
+</div>
+</footer>
+</div>
+</body></html>
