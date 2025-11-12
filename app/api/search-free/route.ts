@@ -8,7 +8,7 @@ type FreeResult = {
   price: number;
   image: string;
   url: string;
-  source: 'flipkart' | 'croma' | 'reliance';
+  source: 'flipkart' | 'croma' | 'reliance' | 'myntra' | 'bigbasket' | '1mg';
   rating?: number;
   reviewCount?: number;
   availability?: string;
@@ -154,21 +154,154 @@ async function scrapeReliance(query: string, max = 10): Promise<FreeResult[]> {
   return results;
 }
 
+// Myntra - Clothing, Fashion, Accessories
+async function scrapeMyntra(query: string, max = 10): Promise<FreeResult[]> {
+  const q = encodeURIComponent(query);
+  const url = `https://www.myntra.com/${q}?rawQuery=${q}`;
+  const html = await fetchHtml(url);
+  if (!html) return [];
+
+  const results: FreeResult[] = [];
+  // Myntra product card pattern
+  const cardRe = /<a[^>]*?class="[^"]*product-base[^"]*"[^>]*?href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
+  let m: RegExpExecArray | null;
+  while ((m = cardRe.exec(html)) && results.length < max) {
+    const href = m[1].startsWith('http') ? m[1] : `https://www.myntra.com${m[1]}`;
+    const block = m[2];
+    const titleMatch = block.match(/<h4[^>]*?class="[^"]*product-product[^"]*"[^>]*>([^<]+)<\/h4>/);
+    const priceMatch = block.match(/<span[^>]*?class="[^"]*product-discountedPrice[^"]*"[^>]*>₹?([\d,]+)/);
+    const imgMatch = block.match(/<img[^>]*?src="([^"]+)"[^>]*?>/) || block.match(/<img[^>]*?data-src="([^"]+)"[^>]*?>/);
+    const title = titleMatch?.[1]?.trim();
+    const price = toNumber(priceMatch?.[1]);
+    const image = imgMatch?.[1];
+    if (title && price && image) {
+      results.push({
+        id: `myntra_${results.length}_${Date.now()}`,
+        title,
+        price,
+        image,
+        url: href,
+        source: 'myntra',
+      });
+    }
+  }
+  return results;
+}
+
+// BigBasket - Groceries, Home Products
+async function scrapeBigBasket(query: string, max = 10): Promise<FreeResult[]> {
+  const q = encodeURIComponent(query);
+  const url = `https://www.bigbasket.com/ps/?q=${q}`;
+  const html = await fetchHtml(url);
+  if (!html) return [];
+
+  const results: FreeResult[] = [];
+  const cardRe = /<a[^>]*?class="[^"]*product[^"]*"[^>]*?href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
+  let m: RegExpExecArray | null;
+  while ((m = cardRe.exec(html)) && results.length < max) {
+    const href = m[1].startsWith('http') ? m[1] : `https://www.bigbasket.com${m[1]}`;
+    const block = m[2];
+    const titleMatch = block.match(/<h3[^>]*?>([^<]+)<\/h3>/);
+    const priceMatch = block.match(/<span[^>]*?class="[^"]*discnt-price[^"]*"[^>]*>₹?([\d,]+)/);
+    const imgMatch = block.match(/<img[^>]*?src="([^"]+)"[^>]*?>/) || block.match(/<img[^>]*?data-src="([^"]+)"[^>]*?>/);
+    const title = titleMatch?.[1]?.trim();
+    const price = toNumber(priceMatch?.[1]);
+    const image = imgMatch?.[1];
+    if (title && price && image) {
+      results.push({
+        id: `bigbasket_${results.length}_${Date.now()}`,
+        title,
+        price,
+        image,
+        url: href,
+        source: 'bigbasket',
+      });
+    }
+  }
+  return results;
+}
+
+// 1mg - Medical Items, Health Products
+async function scrape1mg(query: string, max = 10): Promise<FreeResult[]> {
+  const q = encodeURIComponent(query);
+  const url = `https://www.1mg.com/search/all?name=${q}`;
+  const html = await fetchHtml(url);
+  if (!html) return [];
+
+  const results: FreeResult[] = [];
+  const cardRe = /<a[^>]*?class="[^"]*style__product-link[^"]*"[^>]*?href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
+  let m: RegExpExecArray | null;
+  while ((m = cardRe.exec(html)) && results.length < max) {
+    const href = m[1].startsWith('http') ? m[1] : `https://www.1mg.com${m[1]}`;
+    const block = m[2];
+    const titleMatch = block.match(/<span[^>]*?class="[^"]*style__pro-title[^"]*"[^>]*>([^<]+)<\/span>/);
+    const priceMatch = block.match(/<span[^>]*?class="[^"]*style__price-tag[^"]*"[^>]*>₹?([\d,]+)/);
+    const imgMatch = block.match(/<img[^>]*?src="([^"]+)"[^>]*?>/) || block.match(/<img[^>]*?data-src="([^"]+)"[^>]*?>/);
+    const title = titleMatch?.[1]?.trim();
+    const price = toNumber(priceMatch?.[1]);
+    const image = imgMatch?.[1];
+    if (title && price && image) {
+      results.push({
+        id: `1mg_${results.length}_${Date.now()}`,
+        title,
+        price,
+        image,
+        url: href,
+        source: '1mg',
+      });
+    }
+  }
+  return results;
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const { query, maxResults = 12 } = await req.json();
+    const { query, maxResults = 20 } = await req.json();
     if (!query || typeof query !== 'string') {
       return NextResponse.json({ error: 'Query is required' }, { status: 400 });
     }
 
-    // Run scrapers in parallel
-    const [fk, cr, rl] = await Promise.all([
-      scrapeFlipkart(query, maxResults),
-      scrapeCroma(query, maxResults),
-      scrapeReliance(query, maxResults),
+    // Detect category to prioritize relevant retailers
+    const qLower = query.toLowerCase();
+    const isElectronics = /phone|laptop|headphone|watch|tablet|tv|speaker|camera|gaming/.test(qLower);
+    const isClothing = /shirt|pant|dress|shoes|sneaker|jacket|kurta|saree|jeans|top|clothing|fashion|apparel/.test(qLower);
+    const isGrocery = /rice|dal|oil|flour|spice|vegetable|fruit|milk|bread|grocery|food|snack/.test(qLower);
+    const isMedical = /medicine|tablet|capsule|syrup|vitamin|supplement|health|medical|pharma/.test(qLower);
+    const isHome = /furniture|sofa|bed|chair|table|kitchen|home|decor|appliance/.test(qLower);
+
+    // Run all scrapers in parallel - they handle all categories
+    const allSearches = await Promise.allSettled([
+      scrapeFlipkart(query, maxResults), // Everything
+      scrapeCroma(query, isElectronics ? maxResults : Math.floor(maxResults / 2)), // Electronics focused
+      scrapeReliance(query, isElectronics ? maxResults : Math.floor(maxResults / 2)), // Electronics focused
+      scrapeMyntra(query, isClothing ? maxResults : Math.floor(maxResults / 2)), // Clothing focused
+      scrapeBigBasket(query, isGrocery ? maxResults : Math.floor(maxResults / 2)), // Groceries
+      scrape1mg(query, isMedical ? maxResults : Math.floor(maxResults / 2)), // Medical
     ]);
-    const merged = uniqueByUrl([...fk, ...cr, ...rl]).slice(0, maxResults);
-    return NextResponse.json({ success: true, products: merged });
+
+    const allResults: FreeResult[] = [];
+    allSearches.forEach((result) => {
+      if (result.status === 'fulfilled') {
+        allResults.push(...result.value);
+      }
+    });
+
+    // Remove duplicates and sort by relevance
+    const merged = uniqueByUrl(allResults);
+    
+    // Sort by relevance (exact matches first, then by price/rating)
+    merged.sort((a, b) => {
+      const aMatch = a.title.toLowerCase().includes(query.toLowerCase()) ? 1 : 0;
+      const bMatch = b.title.toLowerCase().includes(query.toLowerCase()) ? 1 : 0;
+      if (aMatch !== bMatch) return bMatch - aMatch;
+      return a.price - b.price;
+    });
+
+    return NextResponse.json({ 
+      success: true, 
+      products: merged.slice(0, maxResults),
+      totalFound: merged.length 
+    });
   } catch (e) {
     return NextResponse.json(
       { error: 'Free search failed', details: e instanceof Error ? e.message : 'Unknown' },

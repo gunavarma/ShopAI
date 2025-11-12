@@ -122,11 +122,11 @@ export function ChatInterfaceEnhanced() {
           timestamp: Date.now(),
           suggestedActions: [
             "iPhone 15 Pro Max",
-            "Samsung Galaxy S24",
-            "MacBook Pro M3",
-            "Sony headphones",
-            "Nike running shoes",
-            "Gaming laptops",
+            "Basmati Rice 5kg",
+            "Men's Casual Shirt",
+            "Paracetamol 500mg",
+            "Sofa Set 3+2",
+            "Wireless Headphones",
           ],
         },
       ]);

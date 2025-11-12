@@ -26,21 +26,21 @@ export class EnhancedAIAssistant {
     const lowercaseQuery = query.toLowerCase();
 
     // Handle greetings
-    if (
-      lowercaseQuery.includes("hello") ||
-      lowercaseQuery.includes("hi") ||
-      lowercaseQuery.includes("hey")
-    ) {
+    const isGreeting = /\b(hello|hi|hey|hiya|hola|namaste)\b/.test(
+      lowercaseQuery.replace(/[^a-z\s]/g, " ")
+    );
+
+    if (isGreeting) {
       return {
         message:
           "Hi! I'm ShopWhiz — I can help you find products with live prices, reviews, and availability. What are you looking for today?",
         suggestedActions: [
-          "Apple iPhone 15",
-          "Samsung Galaxy S24",
-          "MacBook Pro",
-          "Sony headphones",
-          "Nike shoes",
-          "Gaming laptops",
+          "iPhone 15 Pro",
+          "Basmati Rice",
+          "Men's T-Shirt",
+          "Paracetamol Tablets",
+          "Sofa Set",
+          "Wireless Earbuds",
         ],
         dataSource: "ai_generated",
       };
@@ -295,6 +295,7 @@ Return only the response text:
     const lowercaseQuery = query.toLowerCase();
 
     const categoryMap: Record<string, string> = {
+      // Electronics
       phone: "smartphone",
       mobile: "smartphone",
       iphone: "smartphone",
@@ -306,12 +307,46 @@ Return only the response text:
       earphones: "headphones",
       earbuds: "headphones",
       watch: "smartwatch",
+      // Clothing & Fashion
       shoes: "shoes",
       sneakers: "shoes",
       shirt: "clothing",
       tshirt: "clothing",
+      dress: "clothing",
+      kurta: "clothing",
+      saree: "clothing",
+      jeans: "clothing",
+      jacket: "clothing",
+      // Accessories
       bag: "bag",
       backpack: "bag",
+      wallet: "accessories",
+      belt: "accessories",
+      // Groceries
+      rice: "groceries",
+      dal: "groceries",
+      oil: "groceries",
+      flour: "groceries",
+      spice: "groceries",
+      vegetable: "groceries",
+      fruit: "groceries",
+      milk: "groceries",
+      bread: "groceries",
+      // Home Products
+      furniture: "home",
+      sofa: "home",
+      bed: "home",
+      chair: "home",
+      table: "home",
+      kitchen: "home",
+      decor: "home",
+      // Medical
+      medicine: "medical",
+      tablet: "medical",
+      capsule: "medical",
+      syrup: "medical",
+      vitamin: "medical",
+      supplement: "medical",
     };
 
     for (const [keyword, category] of Object.entries(categoryMap)) {

@@ -28,7 +28,7 @@ export interface EnhancedRealtimeProduct {
     reviewer: string;
     date: string;
   }>;
-  source: 'google_shopping' | 'amazon' | 'ai_generated' | 'flipkart' | 'croma' | 'reliance' | 'direct';
+  source: 'google_shopping' | 'amazon' | 'ai_generated' | 'flipkart' | 'croma' | 'reliance' | 'myntra' | 'bigbasket' | '1mg' | 'direct';
   productUrl?: string;
   seller?: string;
   shipping?: string;
@@ -39,7 +39,7 @@ interface FreeSearchProduct {
   price: number;
   image: string;
   url: string;
-  source: 'flipkart' | 'croma' | 'reliance';
+  source: 'flipkart' | 'croma' | 'reliance' | 'myntra' | 'bigbasket' | '1mg';
   rating?: number;
   reviewCount?: number;
   availability?: string;
