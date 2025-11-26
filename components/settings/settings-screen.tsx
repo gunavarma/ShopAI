@@ -29,7 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useTheme } from 'next-themes';
+
 import { toast } from 'sonner';
 
 interface SettingsScreenProps {
@@ -38,7 +38,7 @@ interface SettingsScreenProps {
 }
 
 export function SettingsScreen({ open, onClose }: SettingsScreenProps) {
-  const { theme, setTheme } = useTheme();
+
   const [showApiKey, setShowApiKey] = useState(false);
   const [settings, setSettings] = useState({
     // Profile
@@ -173,34 +173,7 @@ export function SettingsScreen({ open, onClose }: SettingsScreenProps) {
                       </div>
                     </div>
                     
-                    <div>
-                      <Label>Theme Preference</Label>
-                      <Select value={theme} onValueChange={setTheme}>
-                        <SelectTrigger className="mt-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="light">
-                            <div className="flex items-center gap-2">
-                              <div className="w-4 h-4 rounded-full bg-white border border-gray-300"></div>
-                              Light
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="dark">
-                            <div className="flex items-center gap-2">
-                              <div className="w-4 h-4 rounded-full bg-gray-900"></div>
-                              Dark
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="system">
-                            <div className="flex items-center gap-2">
-                              <div className="w-4 h-4 rounded-full bg-gradient-to-r from-white to-gray-900"></div>
-                              System
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+
                   </div>
                 </motion.div>
               </TabsContent>

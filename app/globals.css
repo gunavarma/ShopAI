@@ -48,6 +48,7 @@
     --glass-bg: rgba(255, 255, 255, 0.1);
     --glass-border: rgba(255, 255, 255, 0.2);
   }
+
   .dark {
     --background: 224 71.4% 4.1%;
     --foreground: 210 20% 98%;
@@ -82,14 +83,25 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
-    background: radial-gradient(ellipse at top, hsl(var(--primary) / 0.1) 0%, transparent 50%),
-                radial-gradient(ellipse at bottom, hsl(var(--neon-purple) / 0.1) 0%, transparent 50%);
+    background: linear-gradient(135deg, #EAF2FF 0%, #F3E8FF 50%, #FFF7F0 100%);
   }
 }
 
 @layer components {
+  .glassmorphism {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .gradient-accent {
+    background: linear-gradient(90deg, #2563EB, #7C3AED, #9333EA);
+  }
+
   .glass-card {
     @apply backdrop-blur-md bg-[var(--glass-bg)] border border-[var(--glass-border)] shadow-xl;
   }
@@ -102,11 +114,11 @@
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
-  
+
   .gradient-text {
     @apply bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent;
   }
-  
+
   .neon-glow {
     box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
   }
@@ -115,15 +127,15 @@
     scrollbar-width: thin;
     scrollbar-color: hsl(var(--muted-foreground)) transparent;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar {
     width: 6px;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar-track {
     background: transparent;
   }
-  
+
   .scrollbar-thin::-webkit-scrollbar-thumb {
     background-color: hsl(var(--muted-foreground));
     border-radius: 3px;
@@ -134,7 +146,7 @@
     position: relative;
     overflow: hidden;
   }
-  
+
   .shine-border::before {
     content: '';
     position: absolute;
@@ -142,22 +154,20 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.2),
-      transparent
-    );
+    background: linear-gradient(90deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent);
     transition: left 0.5s;
   }
-  
+
   .shine-border:hover::before {
     left: 100%;
   }
 
   /* Enhanced glow effects */
   .enhanced-glow {
-    box-shadow: 
+    box-shadow:
       0 0 20px hsl(var(--primary) / 0.3),
       0 0 40px hsl(var(--primary) / 0.2),
       0 0 60px hsl(var(--primary) / 0.1);
@@ -165,19 +175,57 @@
 
   /* Animated gradient border */
   .animated-border {
-    background: linear-gradient(45deg, 
-      hsl(var(--primary)), 
-      hsl(var(--neon-purple)), 
-      hsl(var(--primary))
-    );
+    background: linear-gradient(45deg,
+        hsl(var(--primary)),
+        hsl(var(--neon-purple)),
+        hsl(var(--primary)));
     background-size: 200% 200%;
     animation: gradientShift 3s ease infinite;
   }
 
   @keyframes gradientShift {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+    0% {
+      background-position: 0% 50%;
+    }
+
+    50% {
+      background-position: 100% 50%;
+    }
+
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  /* New Design System Utilities (Scoped for new pages) */
+  .glass-panel {
+    @apply bg-white/10 backdrop-blur-md border border-white/20 shadow-xl;
+  }
+
+  .btn-gradient {
+    @apply bg-gradient-to-r from-blue-600 to-violet-600 text-white shadow-lg hover:shadow-blue-500/25 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98];
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-violet-600;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0% {
+      transform: translateY(0px);
+    }
+
+    50% {
+      transform: translateY(-10px);
+    }
+
+    100% {
+      transform: translateY(0px);
+    }
   }
 }
 
@@ -187,8 +235,16 @@
 }
 
 @keyframes blink {
-  0%, 50% { opacity: 1; }
-  51%, 100% { opacity: 0; }
+
+  0%,
+  50% {
+    opacity: 1;
+  }
+
+  51%,
+  100% {
+    opacity: 0;
+  }
 }
 
 /* Custom scrollbar for sidebar */

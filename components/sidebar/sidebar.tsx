@@ -33,7 +33,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useTheme } from "next-themes";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -85,7 +85,7 @@ export function Sidebar({
   loading: externalLoading = false,
 }: SidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const { theme, setTheme } = useTheme();
+
   const { isAuthenticated, user } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const { chats: dbChats, loading: dbLoading } = useRealtimeChat();
@@ -114,16 +114,7 @@ export function Sidebar({
     return date.toLocaleDateString();
   };
 
-  const getThemeIcon = () => {
-    switch (theme) {
-      case "light":
-        return <Sun className="w-4 h-4" />;
-      case "dark":
-        return <Moon className="w-4 h-4" />;
-      default:
-        return <Monitor className="w-4 h-4" />;
-    }
-  };
+
 
   return (
     <TooltipProvider>
@@ -353,31 +344,7 @@ export function Sidebar({
 
             {/* Settings & Actions */}
             <div className="p-4 border-t border-border/50 space-y-3">
-              {/* Theme Toggle */}
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Theme</span>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                      {getThemeIcon()}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setTheme("light")}>
-                      <Sun className="w-4 h-4 mr-2" />
-                      Light
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTheme("dark")}>
-                      <Moon className="w-4 h-4 mr-2" />
-                      Dark
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setTheme("system")}>
-                      <Monitor className="w-4 h-4 mr-2" />
-                      System
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+
 
               <Separator />
 
